@@ -27,9 +27,10 @@ who is already inside or being served.**
 
 ## 3. Carrier end‑of‑day
 
-1. Run / confirm the USPS CPU end‑of‑day close and dispatch.
-2. Confirm UPS, FedEx, and DHL manifests/end‑of‑day are transmitted so today's
-   packages show as accepted.
+1. Run / confirm the USPS CPU end‑of‑day close and dispatch so today's packages
+   show as accepted.
+2. **Take the photo of the category-code report** and submit the digital
+   end-of-day close-out form (see [tools/closeout-form](../tools/closeout-form/README.md)).
 3. File or stage manifests and scan reports per record‑keeping rules.
 
 ## 4. Shut down & secure

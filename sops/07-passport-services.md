@@ -1,8 +1,14 @@
-# SOP 07 — Passport Photos & Application Support
+# SOP 07 — Passport Renewal Support & Photos
 
-We provide **passport photos** and **help preparing passport paperwork**. We are
-**not** a passport acceptance facility unless explicitly stated `[CONFIRM]`, so
-be precise about what we do and don't do.
+We provide **passport renewal support** and **passport photos**, **by
+appointment**. We help customers complete and assemble a passport renewal and we
+take compliant photos — we are **not** a passport acceptance facility and we do
+not issue passports.
+
+> **By appointment.** Passport renewal support is scheduled so we can give the
+> customer focused time. Booking: `[CONFIRM: phone / online booking link]`.
+> Walk-ins wanting passport help should be booked into the next opening (a quick
+> passport *photo* can usually be done on the spot — use judgement and the line).
 
 ## 1. What we do / don't do
 

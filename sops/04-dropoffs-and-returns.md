@@ -1,9 +1,15 @@
 # SOP 04 — Prepaid Drop‑offs & Returns (Amazon / QR / Prepaid Labels)
 
 Covers customers dropping off items that **already have a label or a return
-code** — Amazon returns, prepaid carrier labels, and QR‑code returns. These are
-quick, high‑volume, and a major source of foot traffic. Speed + a scan
-confirmation is the whole job.
+code** — Amazon returns, prepaid labels, and QR‑code returns. These are quick,
+high‑volume, and a major source of foot traffic. Speed + a scan confirmation is
+the whole job.
+
+> **We route through USPS.** We accept prepaid drop‑offs and QR/Amazon returns
+> whose label is **USPS**. If a prepaid label is for UPS/FedEx/DHL, we can't
+> hand it to that carrier here — politely let the customer know and point them
+> to that carrier's drop location, or offer to ship it USPS as a new paid
+> shipment instead.
 
 ## 1. Identify what they have
 
@@ -19,13 +25,13 @@ Ask: **"Do you have a printed label, or a QR/return code on your phone?"**
 
 1. Confirm the package is **sealed** and the label is **fully attached and
    readable** (flat, no tape over the barcode, old labels removed).
-2. Confirm the carrier on the label matches a carrier we hand off to
-   (USPS/UPS/FedEx/DHL).
-3. **Scan** the package into that carrier's system so a drop‑off/acceptance
-   record is created. This protects the customer and us.
+2. Confirm the label is a **USPS** label (the carrier we hand off to). If it's
+   UPS/FedEx/DHL, see the note at the top of this SOP.
+3. **Scan** the package into USPS so a drop‑off/acceptance record is created.
+   This protects the customer and us.
 4. Offer a **drop‑off receipt** with the tracking number. Always provide one for
    returns — it's the customer's proof.
-5. Place in the correct carrier's outbound bin.
+5. Place in the USPS outbound bin.
 
 > Acceptance scanning is mandatory. A package that leaves the counter without a
 > scan record is a future "you lost my return" dispute. No scan, no accept.
@@ -44,9 +50,9 @@ Ask: **"Do you have a printed label, or a QR/return code on your phone?"**
 ## 4. When we can't accept
 
 Politely decline (or offer a paid alternative) when:
-- There's **no valid label and no scannable code** — we can ship it as a normal
-  paid shipment instead (see [SOP 03](03-shipping-and-packing.md)).
-- The label is for a carrier we don't service.
+- There's **no valid label and no scannable code** — we can ship it USPS as a
+  normal paid shipment instead (see [SOP 03](03-shipping-and-packing.md)).
+- The label is for UPS/FedEx/DHL (not USPS) — we can't hand it off here.
 - The item is prohibited/hazardous (see [SOP 03 §1](03-shipping-and-packing.md)).
 - The package is open/unsealed and the customer declines packing.
 

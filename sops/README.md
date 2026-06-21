@@ -23,15 +23,20 @@ document, and dollar is handled correctly.**
 |---|---|
 | Opening the store | [01 — Opening Procedures](01-opening-procedures.md) |
 | Closing the store | [02 — Closing Procedures](02-closing-procedures.md) |
-| Packing & shipping (USPS/UPS/FedEx/DHL) | [03 — Shipping & Packing](03-shipping-and-packing.md) |
-| Prepaid drop‑offs & Amazon/QR returns | [04 — Drop‑offs & Returns](04-dropoffs-and-returns.md) |
+| Packing & shipping (USPS) | [03 — Shipping & Packing](03-shipping-and-packing.md) |
+| Prepaid drop‑offs & Amazon/QR returns (USPS) | [04 — Drop‑offs & Returns](04-dropoffs-and-returns.md) |
 | USPS Contract Postal Unit (CPU) | [05 — USPS / CPU](05-usps-cpu.md) |
-| Notary services | [06 — Notary](06-notary.md) |
-| Passport photos & application support | [07 — Passport Services](07-passport-services.md) |
+| Notary services (by appointment) | [06 — Notary](06-notary.md) |
+| Passport renewal support (by appointment) | [07 — Passport Services](07-passport-services.md) |
 | Printing, copies, fax & scanning | [08 — Print, Copy, Fax, Scan](08-print-copy-fax-scan.md) |
 | Document shredding | [09 — Shredding](09-shredding.md) |
 | Cash handling & point of sale | [10 — Cash Handling & POS](10-cash-handling-pos.md) |
 | Customer service, claims & problems | [11 — Customer Service & Claims](11-customer-service-claims.md) |
+| End-of-day close-out form (digital) | [tools/closeout-form](../tools/closeout-form/README.md) |
+
+> **We ship through USPS only.** We are **not** a UPS/FedEx/DHL outlet. We do
+> accept prepaid drop-offs and Amazon/QR returns that route through USPS.
+> **Notary and passport renewal are offered in store by appointment.**
 
 ---
 
@@ -58,23 +63,20 @@ document, and dollar is handled correctly.**
 
 | Day | Open | Close |
 |---|---|---|
-| Monday | `[CONFIRM]` | `[CONFIRM]` |
-| Tuesday | `[CONFIRM]` | `[CONFIRM]` |
-| Wednesday | `[CONFIRM]` | `[CONFIRM]` |
-| Thursday | `[CONFIRM]` | `[CONFIRM]` |
-| Friday | `[CONFIRM]` | `[CONFIRM]` |
-| Saturday | `[CONFIRM]` | `[CONFIRM]` |
-| Sunday | `[CONFIRM]` | `[CONFIRM]` |
+| Monday | 9:00 AM | 6:00 PM |
+| Tuesday | 9:00 AM | 6:00 PM |
+| Wednesday | 9:00 AM | 6:00 PM |
+| Thursday | 9:00 AM | 6:00 PM |
+| Friday | 9:00 AM | 6:00 PM |
+| Saturday | 9:00 AM | 2:00 PM |
+| Sunday | Closed | Closed |
 
-**Carrier pickup cutoff times** (packages must be processed and staged before
+**USPS pickup / dispatch cutoff** (packages must be processed and staged before
 the truck arrives):
 
 | Carrier | Pickup time | Notes |
 |---|---|---|
-| USPS | `[CONFIRM]` | CPU dispatch |
-| UPS | `[CONFIRM]` | |
-| FedEx | `[CONFIRM]` | |
-| DHL | `[CONFIRM]` | |
+| USPS | `[CONFIRM]` | CPU dispatch — only carrier we ship through |
 
 ## Emergency / key contacts
 
@@ -87,8 +89,6 @@ the truck arrives):
 | Non‑emergency police | `[CONFIRM]` |
 | Emergency | 911 |
 | USPS CPU support | `[CONFIRM]` |
-| UPS account rep | `[CONFIRM]` |
-| FedEx account rep | `[CONFIRM]` |
 | POS / register support | `[CONFIRM]` |
 
 ---

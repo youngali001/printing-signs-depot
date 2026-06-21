@@ -1,8 +1,14 @@
 # SOP 06 — Notary Services
 
-We provide **Florida notary public** services. A notary verifies the signer's
-identity and willingness — **a notary does not verify that a document is true,
-legal, or a good idea.** Only a commissioned notary on staff may notarize.
+We provide **Florida notary public** services **by appointment**. A notary
+verifies the signer's identity and willingness — **a notary does not verify that
+a document is true, legal, or a good idea.** Only a commissioned notary on staff
+may notarize.
+
+> **By appointment.** Notary is scheduled so a commissioned notary is on site.
+> Booking: `[CONFIRM: phone / online booking link]`. If a walk-in asks for
+> notary, check whether a commissioned notary is available now; if not, book the
+> next opening rather than turning them away.
 
 > Florida law governs every step here. When this SOP and Florida notary law
 > conflict, **the law wins.** If you are not the commissioned notary, you cannot

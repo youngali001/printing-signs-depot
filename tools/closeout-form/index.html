@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross Creek Pak N Ship — End-of-Day Close-Out</title>
+<style>
+  :root{
+    --navy:#1B2A3B; --blue:#2BAADC; --red:#D4286E; --bg:#0D1520;
+    --card:#142234; --line:rgba(255,255,255,.10); --txt:#fff;
+    --muted:rgba(255,255,255,.6); --ok:#2ecc71; --warn:#F5C518;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    line-height:1.5;padding:16px;max-width:760px;margin:0 auto}
+  h1{font-size:1.35rem;margin-bottom:2px}
+  .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:var(--card)}
+  legend{padding:0 8px;font-weight:700;color:var(--blue);font-size:.95rem}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+  input,select{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);
+    background:#0c1622;color:#fff;font-size:1rem}
+  input:focus,select:focus{outline:none;border-color:var(--blue)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}
+  .row > div{flex:1;min-width:140px}
+  .req::after{content:" *";color:var(--red)}
+  .total{background:#0c1622;border:1px dashed var(--blue);border-radius:9px;padding:12px;margin-top:12px;
+    font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
+  .total b{color:var(--blue);font-size:1.25rem}
+  .emp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px;position:relative;background:#0f1c2b}
+  .emp h4{font-size:.85rem;color:var(--blue);margin-bottom:4px}
+  .rm{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;border-radius:7px;
+    padding:4px 9px;font-size:.8rem;cursor:pointer}
+  .add{margin-top:12px;background:transparent;border:1px dashed var(--blue);color:var(--blue);
+    padding:11px;border-radius:9px;width:100%;cursor:pointer;font-size:.95rem}
+  .photo-note{font-size:.78rem;color:var(--muted);margin-top:6px}
+  #preview{margin-top:10px;max-height:200px;border-radius:9px;display:none}
+  button.submit{margin-top:8px;width:100%;background:var(--blue);color:#06121c;font-weight:800;
+    font-size:1.05rem;padding:15px;border-radius:11px;cursor:pointer}
+  button.submit:disabled{opacity:.5;cursor:not-allowed}
+  #msg{margin-top:14px;padding:13px;border-radius:9px;display:none;font-size:.95rem}
+  #msg.ok{display:block;background:rgba(46,204,113,.15);border:1px solid var(--ok)}
+  #msg.err{display:block;background:rgba(212,40,110,.15);border:1px solid var(--red)}
+  .hint{font-size:.78rem;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+  <h1>End-of-Day Close-Out</h1>
+  <div class="sub">Cross Creek Pak N Ship · complete after the register is counted and the USPS CPU end-of-day is run.</div>
+
+  <form id="form">
+    <!-- 1. SHIFT INFO -->
+    <fieldset>
+      <legend>1 · Shift</legend>
+      <div class="row">
+        <div>
+          <label class="req" for="date">Date</label>
+          <input type="date" id="date" name="date" required>
+        </div>
+        <div>
+          <label class="req" for="closedBy">Closed by</label>
+          <input type="text" id="closedBy" name="closedBy" placeholder="Your name" required>
+        </div>
+      </div>
+    </fieldset>
+
+    <!-- 2. MONEY -->
+    <fieldset>
+      <legend>2 · Money</legend>
+      <div class="row">
+        <div>
+          <label class="req" for="cash">Cash collected today ($)</label>
+          <input type="number" step="0.01" min="0" id="cash" name="cash" placeholder="0.00" required>
+        </div>
+        <div>
+          <label class="req" for="ccCount"># of credit card payments</label>
+          <input type="number" step="1" min="0" id="ccCount" name="ccCount" placeholder="0" required>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label class="req" for="ccTotal">Credit card total ($)</label>
+          <input type="number" step="0.01" min="0" id="ccTotal" name="ccTotal" placeholder="0.00" required>
+        </div>
+        <div>
+          <label class="req" for="drawer">Money left in register ($)</label>
+          <input type="number" step="0.01" min="0" id="drawer" name="drawer" placeholder="0.00" required>
+        </div>
+      </div>
+      <div class="total"><span>Total sales (cash + card)</span><b id="totalSales">$0.00</b></div>
+    </fieldset>
+
+    <!-- 3. POSTAGE & PACKAGES -->
+    <fieldset>
+      <legend>3 · Postage &amp; Packages</legend>
+      <div class="row">
+        <div>
+          <label class="req" for="stamps">Stamp / postage value used ($)</label>
+          <input type="number" step="0.01" min="0" id="stamps" name="stamps" placeholder="0.00" required>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label class="req" for="prepaid">Prepaid packages processed (#)</label>
+          <input type="number" step="1" min="0" id="prepaid" name="prepaid" placeholder="0" required>
+        </div>
+        <div>
+          <label class="req" for="voided">Voided packages (#)</label>
+          <input type="number" step="1" min="0" id="voided" name="voided" placeholder="0" required>
+        </div>
+      </div>
+      <label class="req" for="photo">Photo of category-code report</label>
+      <input type="file" id="photo" name="photo" accept="image/*" capture="environment" required>
+      <div class="photo-note">Tap to take a photo of the printed category-code report, or upload an image.</div>
+      <img id="preview" alt="report preview">
+    </fieldset>
+
+    <!-- 4. PER-EMPLOYEE -->
+    <fieldset>
+      <legend>4 · Employees (one block each)</legend>
+      <div class="hint">Each worker on shift: clock times, customers helped, and how many customers they
+        told about notary &amp; passport renewal.</div>
+      <div id="employees"></div>
+      <button type="button" class="add" id="addEmp">+ Add employee</button>
+    </fieldset>
+
+    <button type="submit" class="submit" id="submitBtn">Submit close-out</button>
+    <div id="msg"></div>
+  </form>
+
+<script>
+  // ---- default date = today ----
+  document.getElementById('date').valueAsDate = new Date();
+
+  // ---- live total sales ----
+  function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
+  function recalc(){
+    document.getElementById('totalSales').textContent =
+      '$' + (num('cash') + num('ccTotal')).toFixed(2);
+  }
+  ['cash','ccTotal'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
+
+  // ---- employee blocks ----
+  const empWrap = document.getElementById('employees');
+  function addEmployee(){
+    const i = empWrap.children.length + 1;
+    const div = document.createElement('div');
+    div.className = 'emp';
+    div.innerHTML = `
+      <span class="rm">Remove</span>
+      <h4>Employee ${i}</h4>
+      <label>Name</label>
+      <input type="text" class="e-name" placeholder="Employee name">
+      <div class="row">
+        <div><label>Clock in</label><input type="time" class="e-in"></div>
+        <div><label>Clock out</label><input type="time" class="e-out"></div>
+      </div>
+      <div class="row">
+        <div><label>Customers helped</label><input type="number" min="0" step="1" class="e-cust" placeholder="0"></div>
+        <div><label># told: notary</label><input type="number" min="0" step="1" class="e-notary" placeholder="0"></div>
+        <div><label># told: passport</label><input type="number" min="0" step="1" class="e-passport" placeholder="0"></div>
+      </div>`;
+    div.querySelector('.rm').addEventListener('click', () => { div.remove(); renumber(); });
+    empWrap.appendChild(div);
+  }
+  function renumber(){
+    [...empWrap.children].forEach((d,idx)=> d.querySelector('h4').textContent = 'Employee ' + (idx+1));
+  }
+  document.getElementById('addEmp').addEventListener('click', addEmployee);
+  addEmployee(); // start with one
+
+  // ---- photo preview ----
+  const photoInput = document.getElementById('photo');
+  const preview = document.getElementById('preview');
+  let photoData = null, photoName = '', photoType = '';
+  photoInput.addEventListener('change', () => {
+    const f = photoInput.files[0];
+    if(!f) return;
+    photoName = f.name; photoType = f.type;
+    const reader = new FileReader();
+    reader.onload = e => {
+      photoData = e.target.result.split(',')[1]; // strip data: prefix -> base64
+      preview.src = e.target.result;
+      preview.style.display = 'block';
+    };
+    reader.readAsDataURL(f);
+  });
+
+  // ---- submit ----
+  const form = document.getElementById('form');
+  const btn = document.getElementById('submitBtn');
+  const msg = document.getElementById('msg');
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    if(!photoData){ showMsg('err','Please attach the category-code report photo.'); return; }
+
+    const employees = [...empWrap.children].map(d => ({
+      name:     d.querySelector('.e-name').value.trim(),
+      clockIn:  d.querySelector('.e-in').value,
+      clockOut: d.querySelector('.e-out').value,
+      customers:parseInt(d.querySelector('.e-cust').value)||0,
+      notary:   parseInt(d.querySelector('.e-notary').value)||0,
+      passport: parseInt(d.querySelector('.e-passport').value)||0
+    })).filter(x => x.name);
+
+    const payload = {
+      date: document.getElementById('date').value,
+      closedBy: document.getElementById('closedBy').value.trim(),
+      cash: num('cash'),
+      ccCount: parseInt(document.getElementById('ccCount').value)||0,
+      ccTotal: num('ccTotal'),
+      totalSales: num('cash') + num('ccTotal'),
+      drawer: num('drawer'),
+      stamps: num('stamps'),
+      prepaid: parseInt(document.getElementById('prepaid').value)||0,
+      voided: parseInt(document.getElementById('voided').value)||0,
+      employees: employees,
+      photoData: photoData, photoName: photoName, photoType: photoType
+    };
+
+    btn.disabled = true; btn.textContent = 'Submitting…';
+
+    // google.script.run is provided when this page is served by Apps Script.
+    if (typeof google !== 'undefined' && google.script && google.script.run){
+      google.script.run
+        .withSuccessHandler(onOk)
+        .withFailureHandler(onErr)
+        .submitCloseout(payload);
+    } else {
+      onErr({message:'Not running inside Apps Script. Deploy via Apps Script (see README) to enable saving.'});
+    }
+  });
+
+  function onOk(res){
+    showMsg('ok', '✅ Saved. ' + (res || '') + ' You can close this page.');
+    btn.textContent = 'Submitted';
+  }
+  function onErr(err){
+    showMsg('err', '⚠️ ' + (err && err.message ? err.message : 'Submit failed. Try again or tell the manager.'));
+    btn.disabled = false; btn.textContent = 'Submit close-out';
+  }
+  function showMsg(type, text){ msg.className = type; msg.textContent = text; msg.scrollIntoView({behavior:'smooth'}); }
+</script>
+</body>
+</html>

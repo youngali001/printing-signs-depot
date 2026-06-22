@@ -61,11 +61,12 @@ function submitCloseout(data) {
   var sheet = getOrCreateSheet(ss, 'Closeouts', [
     'Timestamp', 'Date', 'Closed by', 'Cash ($)', 'CC payments (#)',
     'CC total ($)', 'Total sales ($)', 'Money in register ($)',
-    'Stamps used ($)', 'Prepaid pkgs', 'Voided pkgs', '# Employees', 'Report photo'
+    'Stamps used ($)', 'Postage left in CRM ($)', 'Prepaid pkgs', 'Voided pkgs',
+    '# Employees', 'Report photo'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, data.cash, data.ccCount,
-    data.ccTotal, data.totalSales, data.drawer, data.stamps,
+    data.ccTotal, data.totalSales, data.drawer, data.stamps, data.postageLeft,
     data.prepaid, data.voided, (data.employees || []).length, photoUrl
   ]);
 
@@ -119,6 +120,7 @@ function sendSummaryEmail(data, photoUrl) {
     'Money left in register: $' + Number(data.drawer).toFixed(2),
     '',
     'Stamps/postage used: $' + Number(data.stamps).toFixed(2),
+    'Postage left in CRM: $' + Number(data.postageLeft).toFixed(2),
     'Prepaid packages: ' + data.prepaid,
     'Voided packages: ' + data.voided,
     '',

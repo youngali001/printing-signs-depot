@@ -24,7 +24,7 @@ var CONFIG = {
 
   // Where to email each close-out. Set SEND_EMAIL to false to turn email off.
   SEND_EMAIL: true,
-  EMAIL_TO: 'q.ali.enterprise@gmail.com'
+  EMAIL_TO: 'info@ccbizcenter.com'
 };
 // ===================================================================
 

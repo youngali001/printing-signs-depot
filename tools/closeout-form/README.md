@@ -8,7 +8,16 @@ a phone/tablet at close; on Submit it:
    and stores the photo's link in the sheet.
 3. **Logs each employee** (name, clock in/out, customers helped, notary &
    passport mentions) to a second tab.
-4. *(Optional)* **emails** the summary + photo link to the store inbox.
+4. **Auto-reads the category-code report photo** with Gemini Vision: the moment
+   the photo is attached, it fills in **Postage used** and **Prepaid packages**,
+   and on submit it saves every line of the report (code, description, qty,
+   value) to a **"Report Lines"** tab. *(Staff verify before submitting — OCR on
+   a curled receipt isn't perfect. Optional: works without a key, just manual.)*
+5. *(Optional)* **emails** the summary + photo link to the store inbox.
+
+> Cash, credit-card totals, money left in register, and postage left in CRM are
+> **not** on the report photo — those always come from the register/CRM and stay
+> manual entries.
 
 It runs entirely on **Google Apps Script** — free, no Formspree, no monthly
 cost, and no separate web hosting.
@@ -47,9 +56,23 @@ cost, and no separate web hosting.
    - `FOLDER_ID` → the ID from Step 2
    - `EMAIL_TO` → where to send the summary (default is the store email)
    - `SEND_EMAIL` → leave `true` to get emails, or set `false` to turn off
+   - `GEMINI_API_KEY` → for auto-reading the report photo (see Step 3a). Leave
+     the placeholder to disable auto-read; staff then type postage/prepaid.
+   - `GEMINI_MODEL` → leave as is unless you want a different Gemini model.
 4. Add the form file: click **+** next to *Files* → **HTML** → name it exactly
    **`index`** → delete the sample and **paste the contents of `index.html`**.
 5. **Save** (💾).
+
+### Step 3a — Get a free Gemini API key (for photo auto-read)
+*Skip this if you don't want auto-read; the form still works, staff just type
+postage + prepaid by hand.*
+1. Go to <https://aistudio.google.com/apikey> and sign in.
+2. Click **Create API key** and copy it.
+3. Paste it into `CONFIG.GEMINI_API_KEY` in `Code.gs`, then **Save**.
+   - One photo a day is well within the free tier.
+   - When a photo is attached, the form reads it and fills Postage used +
+     Prepaid; the full line-by-line breakdown lands in the "Report Lines" tab on
+     submit.
 
 ### Step 4 — Deploy as a Web App
 1. Click **Deploy → New deployment**.
@@ -72,8 +95,9 @@ cost, and no separate web hosting.
 ## Daily use
 At close, after counting the drawer and running the USPS CPU end-of-day:
 1. Open the **Close-Out** icon.
-2. Fill in money, postage/packages, and **take a photo of the category-code
-   report**.
+2. **Take a photo of the category-code report** — it auto-fills Postage used +
+   Prepaid (verify them), then fill in cash, card, register, postage left, and
+   voided.
 3. Add a block for **each employee** who worked (name, clock in/out, customers
    helped, # told about notary, # told about passport).
 4. **Submit.** Done — data is in the sheet, photo is in the Drive folder.

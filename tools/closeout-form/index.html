@@ -116,8 +116,10 @@
       </div>
       <label class="req" for="photo">Photo of category-code report</label>
       <input type="file" id="photo" name="photo" accept="image/*" capture="environment" required>
-      <div class="photo-note">Tap to take a photo of the printed category-code report, or upload an image.</div>
+      <div class="photo-note">Tap to take a photo of the printed category-code report, or upload an image.
+        The app will try to read it and fill in Postage used + Prepaid for you — <b>always verify</b>.</div>
       <img id="preview" alt="report preview">
+      <div id="reportStatus" style="display:none;margin-top:8px;padding:9px 11px;border-radius:8px;font-size:.85rem"></div>
     </fieldset>
 
     <!-- 4. PER-EMPLOYEE -->
@@ -177,7 +179,9 @@
   // ---- photo preview ----
   const photoInput = document.getElementById('photo');
   const preview = document.getElementById('preview');
-  let photoData = null, photoName = '', photoType = '';
+  const reportStatus = document.getElementById('reportStatus');
+  let photoData = null, photoName = '', photoType = '', reportData = null;
+
   photoInput.addEventListener('change', () => {
     const f = photoInput.files[0];
     if(!f) return;
@@ -187,9 +191,47 @@
       photoData = e.target.result.split(',')[1]; // strip data: prefix -> base64
       preview.src = e.target.result;
       preview.style.display = 'block';
+      readReport(); // auto-read the report photo
     };
     reader.readAsDataURL(f);
   });
+
+  function setReportStatus(text, kind){
+    const colors = {
+      work: ['rgba(245,197,24,.15)', '#F5C518'],
+      ok:   ['rgba(46,204,113,.15)', '#2ecc71'],
+      err:  ['rgba(212,40,110,.15)', '#D4286E']
+    }[kind] || ['rgba(255,255,255,.08)', 'rgba(255,255,255,.3)'];
+    reportStatus.style.display = 'block';
+    reportStatus.style.background = colors[0];
+    reportStatus.style.border = '1px solid ' + colors[1];
+    reportStatus.textContent = text;
+  }
+
+  function readReport(){
+    if(!photoData) return;
+    if(typeof google === 'undefined' || !google.script || !google.script.run){
+      setReportStatus('Auto-read works once deployed via Apps Script — enter postage/prepaid by hand for now.', 'work');
+      return;
+    }
+    setReportStatus('Reading report photo… (a few seconds)', 'work');
+    google.script.run
+      .withSuccessHandler(fillFromReport)
+      .withFailureHandler(err => setReportStatus(
+        'Couldn’t auto-read the report — enter Postage used + Prepaid by hand. ' +
+        (err && err.message ? '(' + err.message + ')' : ''), 'err'))
+      .extractReport(photoData, photoType);
+  }
+
+  function fillFromReport(r){
+    if(!r){ setReportStatus('No data read — enter Postage used + Prepaid by hand.', 'err'); return; }
+    reportData = r;
+    if(r.grandTotalValue != null) document.getElementById('stamps').value = Number(r.grandTotalValue).toFixed(2);
+    if(r.prepaidQty != null) document.getElementById('prepaid').value = r.prepaidQty;
+    recalc();
+    setReportStatus('✅ Read from photo: postage $' + Number(r.grandTotalValue||0).toFixed(2) +
+      ', prepaid ' + (r.prepaidQty||0) + '. Please verify, then add cash / card / register / voided.', 'ok');
+  }
 
   // ---- submit ----
   const form = document.getElementById('form');
@@ -221,6 +263,7 @@
       prepaid: parseInt(document.getElementById('prepaid').value)||0,
       voided: parseInt(document.getElementById('voided').value)||0,
       employees: employees,
+      reportData: reportData,
       photoData: photoData, photoName: photoName, photoType: photoType
     };
 

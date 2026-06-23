@@ -24,7 +24,13 @@ var CONFIG = {
 
   // Where to email each close-out. Set SEND_EMAIL to false to turn email off.
   SEND_EMAIL: true,
-  EMAIL_TO: 'info@ccbizcenter.com'
+  EMAIL_TO: 'info@ccbizcenter.com',
+
+  // Reads the category-code report photo automatically. Get a free key at
+  // https://aistudio.google.com/apikey and paste it here. Leave the placeholder
+  // to disable auto-read (staff just type postage/prepaid by hand).
+  GEMINI_API_KEY: 'PASTE_GEMINI_API_KEY_HERE',
+  GEMINI_MODEL: 'gemini-2.5-flash'
 };
 // ===================================================================
 
@@ -33,6 +39,60 @@ function doGet() {
   return HtmlService.createHtmlOutputFromFile('index')
     .setTitle('Cross Creek Pak N Ship — Close-Out')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+}
+
+/**
+ * Called by the form when a photo is attached:
+ * google.script.run.extractReport(base64, mimeType).
+ * Sends the photo to Gemini Vision and returns structured report data.
+ */
+function extractReport(photoData, photoType) {
+  if (!CONFIG.GEMINI_API_KEY || CONFIG.GEMINI_API_KEY.indexOf('PASTE') === 0) {
+    throw new Error('Auto-read is off (no Gemini API key set).');
+  }
+
+  var prompt = [
+    'You are reading a USPS CPU "Category Code Report" printed on a receipt.',
+    'Extract ALL data and return ONLY valid JSON with exactly this shape:',
+    '{',
+    '  "businessDate": "MM/DD/YYYY or empty string",',
+    '  "sections": [',
+    '    { "name": "section name", "lines": [ { "cat": "code", "description": "text", "qty": 0, "value": 0 } ],',
+    '      "subtotalValue": 0, "subtotalQty": 0 }',
+    '  ],',
+    '  "grandTotalValue": 0, "grandTotalQty": 0,',
+    '  "prepaidQty": 0, "prepaidValue": 0',
+    '}',
+    'Rules:',
+    '- Sections may include "Mailing Services", "Special Services", "Affixed Postage", "Prepaid Mail".',
+    '- "cat" is the short code (e.g. PRPE, FCML, PKGS, CERM). "description" is the text after it.',
+    '- Numbers are plain numbers, no "$". Parentheses mean negative: ($15.75) => -15.75.',
+    '- prepaidQty/prepaidValue = the "Prepaid Mail" section subtotal (qty and value); 0 if none.',
+    '- grandTotalValue/grandTotalQty = the final "Total (Price)/(Qty)" line.',
+    '- If something is unreadable use 0. Do not invent lines.'
+  ].join('\n');
+
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/' +
+    CONFIG.GEMINI_MODEL + ':generateContent?key=' + CONFIG.GEMINI_API_KEY;
+  var body = {
+    contents: [{ parts: [
+      { text: prompt },
+      { inline_data: { mime_type: photoType || 'image/jpeg', data: photoData } }
+    ]}],
+    generationConfig: { response_mime_type: 'application/json', temperature: 0 }
+  };
+
+  var res = UrlFetchApp.fetch(url, {
+    method: 'post', contentType: 'application/json',
+    payload: JSON.stringify(body), muteHttpExceptions: true
+  });
+  if (res.getResponseCode() !== 200) {
+    throw new Error('Gemini ' + res.getResponseCode() + ': ' + res.getContentText().slice(0, 150));
+  }
+  var out = JSON.parse(res.getContentText());
+  var text = out.candidates && out.candidates[0].content.parts[0].text;
+  if (!text) throw new Error('Empty response from Gemini.');
+  return JSON.parse(text);
 }
 
 /**
@@ -83,6 +143,22 @@ function submitCloseout(data) {
         now, data.date, e.name, e.clockIn, e.clockOut,
         e.customers, e.notary, e.passport, data.closedBy
       ]);
+    });
+  }
+
+  // 3b) Full report line-items in "Report Lines" ----------------------
+  var rd = data.reportData;
+  if (rd && rd.sections && rd.sections.length) {
+    var rlSheet = getOrCreateSheet(ss, 'Report Lines', [
+      'Timestamp', 'Date', 'Section', 'CAT', 'Description', 'Qty', 'Value ($)'
+    ]);
+    var rlTime = new Date();
+    rd.sections.forEach(function (sec) {
+      (sec.lines || []).forEach(function (ln) {
+        rlSheet.appendRow([
+          rlTime, data.date, sec.name, ln.cat, ln.description, ln.qty, ln.value
+        ]);
+      });
     });
   }
 

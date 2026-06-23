@@ -1,117 +1,121 @@
-# End-of-Day Close-Out Form
+# Store Operations Web App
 
-A digital end-of-day form for Cross Creek Pak N Ship. The closer fills it out on
-a phone/tablet at close; on Submit it:
+A small, free web app for Cross Creek Pak N Ship, built on **Google Apps
+Script**. One deployment serves three pages staff open on a phone/tablet:
 
-1. **Writes the numbers to a Google Sheet** (one summary row per day).
-2. **Saves the category-code report photo into a preset Google Drive folder**
-   and stores the photo's link in the sheet.
+| Page | URL | What it does |
+|---|---|---|
+| **Close-out** | `…/exec` | End-of-day money, postage, packages, employees |
+| **Opening** | `…/exec?page=open` | Morning bank count + opening checklist |
+| **Appointments** | `…/exec?page=appt` | Log notary / passport appointments |
+
+## What the close-out does on Submit
+1. **Over/short** — computes expected drawer (starting bank + cash − petty cash)
+   vs. counted, and flags when the till is off by more than the tolerance.
+2. **Writes a summary row** to the **Closeouts** sheet.
 3. **Logs each employee** (name, clock in/out, customers helped, notary &
-   passport mentions) to a second tab.
-4. **Auto-reads the category-code report photo** with Gemini Vision: the moment
-   the photo is attached, it fills in **Postage used** and **Prepaid packages**,
-   and on submit it saves every line of the report (code, description, qty,
-   value) to a **"Report Lines"** tab. *(Staff verify before submitting — OCR on
-   a curled receipt isn't perfect. Optional: works without a key, just manual.)*
-5. *(Optional)* **emails** the summary + photo link to the store inbox.
+   passport mentions) to **Employees**.
+4. **Auto-reads the category-code report photo** (Gemini Vision): fills Postage
+   used + Prepaid, and saves every report line to **Report Lines**.
+5. **Files the report photo** into a Drive folder.
+6. **Emails the summary**, and sends a **low-postage alert** when the CRM
+   balance is below the threshold.
 
-> Cash, credit-card totals, money left in register, and postage left in CRM are
-> **not** on the report photo — those always come from the register/CRM and stay
-> manual entries.
+Built-in safeguards: **PIN gate**, **draft auto-save** (survives a refresh /
+dropped connection), **photo compression + retake**, a **review screen with
+sanity-check warnings**, and a **duplicate-day warning**.
 
-It runs entirely on **Google Apps Script** — free, no Formspree, no monthly
-cost, and no separate web hosting.
+> Cash, card totals, money in register, and postage left in CRM aren't on the
+> report photo — those always come from the register/CRM and stay manual.
+
+## Sheet tabs created automatically
+`Closeouts` · `Employees` · `Report Lines` · `Openings` · `Appointments`
+(plus `Dashboard` when you run `buildDashboard`).
 
 ## Files
-
-| File | What it is |
+| File | Paste into Apps Script as |
 |---|---|
-| `index.html` | The form (UI). Paste into the Apps Script project as an HTML file named `index`. |
-| `Code.gs` | The backend. Paste into the Apps Script project's script file. |
+| `Code.gs` | the script file |
+| `index.html` | HTML file named **`index`** (close-out) |
+| `opening.html` | HTML file named **`opening`** |
+| `appointments.html` | HTML file named **`appointments`** |
 
 ---
 
-## One-time setup (~10 minutes)
+## One-time setup (~15 minutes)
 
 ### Step 1 — Create the Google Sheet
-1. Go to <https://sheets.google.com> → **Blank** spreadsheet.
-2. Name it e.g. *"Cross Creek Close-Outs"*.
-3. Copy its **ID** from the URL — the long part between `/d/` and `/edit`:
-   `docs.google.com/spreadsheets/d/`**`THIS_IS_THE_ID`**`/edit`
-   *(You don't need to add tabs/headers — the script creates "Closeouts" and
-   "Employees" automatically.)*
+1. <https://sheets.google.com> → **Blank**. Name it e.g. *"Cross Creek Ops"*.
+2. Copy its **ID** from the URL: `…/spreadsheets/d/`**`THIS_IS_THE_ID`**`/edit`
+   (tabs/headers are created automatically).
 
 ### Step 2 — Create the Drive folder for photos
-1. Go to <https://drive.google.com> → **New → Folder**, name it e.g.
-   *"Close-Out Report Photos"*.
-2. Open the folder and copy its **ID** from the URL:
-   `drive.google.com/drive/folders/`**`THIS_IS_THE_ID`**
+1. <https://drive.google.com> → **New → Folder** (e.g. *"Report Photos"*).
+2. Open it and copy the **ID**: `…/folders/`**`THIS_IS_THE_ID`**
 
 ### Step 3 — Create the Apps Script project
-1. Go to <https://script.google.com> → **New project**.
-2. Delete the sample code in `Code.gs`, then **paste the contents of this
-   folder's `Code.gs`**.
-3. At the top, fill in `CONFIG`:
-   - `SHEET_ID` → the ID from Step 1
-   - `FOLDER_ID` → the ID from Step 2
-   - `EMAIL_TO` → where to send the summary (default is the store email)
-   - `SEND_EMAIL` → leave `true` to get emails, or set `false` to turn off
-   - `GEMINI_API_KEY` → for auto-reading the report photo (see Step 3a). Leave
-     the placeholder to disable auto-read; staff then type postage/prepaid.
-   - `GEMINI_MODEL` → leave as is unless you want a different Gemini model.
-4. Add the form file: click **+** next to *Files* → **HTML** → name it exactly
-   **`index`** → delete the sample and **paste the contents of `index.html`**.
-5. **Save** (💾).
+1. <https://script.google.com> → **New project**.
+2. Replace the sample `Code.gs` with this folder's **`Code.gs`**.
+3. Fill in `CONFIG` at the top:
+   - `SHEET_ID`, `FOLDER_ID` → from Steps 1–2
+   - `EMAIL_TO`, `SEND_EMAIL` → daily summary settings
+   - `GEMINI_API_KEY` → see Step 3a (leave placeholder to disable auto-read)
+   - `STAFF_PIN` → the shared PIN staff type to open the app (set `''` for none)
+   - `OVER_SHORT_TOLERANCE` → dollars before a till variance is flagged
+   - `POSTAGE_ALERT_THRESHOLD` → CRM balance that triggers the low-postage email
+4. Add the three HTML files: **+** next to *Files* → **HTML** → name it exactly
+   `index`, then again for `opening`, then `appointments` — pasting each
+   file's contents.
+5. **Save**.
 
-### Step 3a — Get a free Gemini API key (for photo auto-read)
-*Skip this if you don't want auto-read; the form still works, staff just type
-postage + prepaid by hand.*
-1. Go to <https://aistudio.google.com/apikey> and sign in.
-2. Click **Create API key** and copy it.
-3. Paste it into `CONFIG.GEMINI_API_KEY` in `Code.gs`, then **Save**.
-   - One photo a day is well within the free tier.
-   - When a photo is attached, the form reads it and fills Postage used +
-     Prepaid; the full line-by-line breakdown lands in the "Report Lines" tab on
-     submit.
+### Step 3a — Free Gemini API key (photo auto-read)
+1. <https://aistudio.google.com/apikey> → **Create API key**, copy it.
+2. Paste into `CONFIG.GEMINI_API_KEY`, **Save**. One photo/day is well inside
+   the free tier.
 
 ### Step 4 — Deploy as a Web App
-1. Click **Deploy → New deployment**.
-2. Gear icon → **Web app**.
-3. Set:
-   - **Execute as:** *Me* (your Google account)
-   - **Who has access:** *Anyone* (so staff can open it without signing in) — or
-     *Anyone within [your Workspace]* if all staff use store Google accounts.
-4. **Deploy**. Approve the permissions prompt (it needs Sheets, Drive, and Gmail
-   to do its job).
-5. Copy the **Web app URL**. That's the link staff open each night.
+1. **Deploy → New deployment** → gear → **Web app**.
+2. **Execute as:** *Me*. **Who has access:** *Anyone* (or *Anyone within your
+   Workspace* if all staff use store Google accounts — a second access layer on
+   top of the PIN).
+3. **Deploy**, approve the permissions prompt (Sheets, Drive, Gmail, external
+   fetch for Gemini).
+4. Copy the **Web app URL**.
 
 ### Step 5 — Put it on the register device
-- Open the Web app URL on the register phone/tablet.
-- **Add to Home Screen** (iOS Safari: Share → Add to Home Screen; Android
-  Chrome: ⋮ → Add to Home screen) so it's a one-tap "Close-Out" icon.
+- Open the URL, **Add to Home Screen** for a one-tap icon.
+- The page nav links switch between Close-out / Opening / Appointments.
+
+### Step 6 (optional) — Build the dashboard
+In the Apps Script editor, choose **`buildDashboard`** in the function dropdown
+and click **Run** once. It creates a **Dashboard** tab with current-month KPIs,
+per-employee upsell totals, and category-mix breakdowns (live formulas).
+
+### Step 7 (optional) — Scheduled summary emails
+In the editor → **Triggers** (clock icon) → **Add trigger**:
+- Function `sendWeeklySummary`, time-driven, weekly.
+- Function `sendMonthlySummary`, time-driven, monthly.
+These email totals + net over/short for the period to `EMAIL_TO`.
 
 ---
 
 ## Daily use
-At close, after counting the drawer and running the USPS CPU end-of-day:
-1. Open the **Close-Out** icon.
-2. **Take a photo of the category-code report** — it auto-fills Postage used +
-   Prepaid (verify them), then fill in cash, card, register, postage left, and
-   voided.
-3. Add a block for **each employee** who worked (name, clock in/out, customers
-   helped, # told about notary, # told about passport).
-4. **Submit.** Done — data is in the sheet, photo is in the Drive folder.
+- **Morning:** open **Opening**, count the bank, tick the checklist, submit.
+  (The close-out auto-prefills the starting bank from this.)
+- **During the day:** log any notary/passport booking on **Appointments**.
+- **Close:** after counting the drawer and running the USPS CPU end-of-day, open
+  **Close-out**, photograph the category-code report (auto-fills postage +
+  prepaid — verify), enter cash/card/register/voided, add each employee, review
+  the warnings, and submit.
 
-## Updating the form later
-If you change `index.html` or `Code.gs`, paste the new version into the Apps
-Script project and **Deploy → Manage deployments → Edit → Version: New version →
-Deploy**. The same URL keeps working.
+## Updating later
+Paste new versions into the Apps Script project, then **Deploy → Manage
+deployments → Edit → Version: New version → Deploy**. Same URL keeps working.
 
-## Notes & troubleshooting
-- **"Not running inside Apps Script"** message → you opened the raw HTML file
-  directly. Saving only works through the deployed Web app URL (Step 4).
+## Troubleshooting
+- **"Not running inside Apps Script"** → you opened the raw HTML; saving only
+  works through the deployed Web app URL.
+- **Auto-read fails** → check the Gemini key; staff can always type the numbers.
 - **Permission errors** → re-run Step 4 and approve the Google prompt.
-- The photo is named `YYYY-MM-DD_category-report_[closer].jpg` in the Drive
-  folder, so files sort by date automatically.
-- Want photos emailed as an *attachment* instead of a link? That's a small
-  tweak to `sendSummaryEmail` — ask and it can be added.
+- **Over/short looks wrong** → confirm staff entered *total cash counted in the
+  drawer before pulling the deposit*, and the correct starting bank.

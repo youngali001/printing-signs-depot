@@ -6,289 +6,364 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cross Creek Pak N Ship — End-of-Day Close-Out</title>
 <style>
-  :root{
-    --navy:#1B2A3B; --blue:#2BAADC; --red:#D4286E; --bg:#0D1520;
-    --card:#142234; --line:rgba(255,255,255,.10); --txt:#fff;
-    --muted:rgba(255,255,255,.6); --ok:#2ecc71; --warn:#F5C518;
-  }
+  :root{--bg:#0D1520;--card:#142234;--line:rgba(255,255,255,.10);--blue:#2BAADC;
+    --red:#D4286E;--ok:#2ecc71;--warn:#F5C518;--muted:rgba(255,255,255,.6)}
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  body{background:var(--bg);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     line-height:1.5;padding:16px;max-width:760px;margin:0 auto}
-  h1{font-size:1.35rem;margin-bottom:2px}
-  .sub{color:var(--muted);font-size:.9rem;margin-bottom:18px}
+  h1{font-size:1.35rem}.sub{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+  nav{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  nav a{font-size:.82rem;padding:7px 12px;border:1px solid var(--line);border-radius:20px;color:var(--muted)}
+  nav a.on{background:var(--blue);color:#06121c;font-weight:700;border-color:var(--blue)}
   fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:var(--card)}
   legend{padding:0 8px;font-weight:700;color:var(--blue);font-size:.95rem}
   label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
-  input,select{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);
-    background:#0c1622;color:#fff;font-size:1rem}
-  input:focus,select:focus{outline:none;border-color:var(--blue)}
-  .row{display:flex;gap:12px;flex-wrap:wrap}
-  .row > div{flex:1;min-width:140px}
+  input,select,textarea{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);
+    background:#0c1622;color:#fff;font-size:1rem;font-family:inherit}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue)}
+  .row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:140px}
   .req::after{content:" *";color:var(--red)}
-  .total{background:#0c1622;border:1px dashed var(--blue);border-radius:9px;padding:12px;margin-top:12px;
-    font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
-  .total b{color:var(--blue);font-size:1.25rem}
+  .calc{background:#0c1622;border:1px dashed var(--blue);border-radius:9px;padding:12px;margin-top:12px}
+  .calc .line{display:flex;justify-content:space-between;font-size:.92rem;padding:3px 0}
+  .calc b{font-size:1.15rem}
+  #osLine b{color:var(--ok)} #osLine.bad b{color:var(--red)}
   .emp{border:1px solid var(--line);border-radius:10px;padding:12px;margin-top:12px;position:relative;background:#0f1c2b}
   .emp h4{font-size:.85rem;color:var(--blue);margin-bottom:4px}
-  .rm{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;border-radius:7px;
-    padding:4px 9px;font-size:.8rem;cursor:pointer}
-  .add{margin-top:12px;background:transparent;border:1px dashed var(--blue);color:var(--blue);
-    padding:11px;border-radius:9px;width:100%;cursor:pointer;font-size:.95rem}
-  .photo-note{font-size:.78rem;color:var(--muted);margin-top:6px}
+  .rm{position:absolute;top:8px;right:8px;background:var(--red);color:#fff;border-radius:7px;padding:4px 9px;font-size:.8rem;cursor:pointer}
+  .add{margin-top:12px;background:transparent;border:1px dashed var(--blue);color:var(--blue);padding:11px;border-radius:9px;width:100%;cursor:pointer}
+  .photo-note,.hint{font-size:.78rem;color:var(--muted);margin-top:6px}
   #preview{margin-top:10px;max-height:200px;border-radius:9px;display:none}
-  button.submit{margin-top:8px;width:100%;background:var(--blue);color:#06121c;font-weight:800;
-    font-size:1.05rem;padding:15px;border-radius:11px;cursor:pointer}
-  button.submit:disabled{opacity:.5;cursor:not-allowed}
-  #msg{margin-top:14px;padding:13px;border-radius:9px;display:none;font-size:.95rem}
+  .btn{width:100%;font-weight:800;font-size:1.05rem;padding:15px;border-radius:11px;cursor:pointer}
+  .btn-primary{background:var(--blue);color:#06121c} .btn:disabled{opacity:.5}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--muted);padding:9px;border-radius:9px;cursor:pointer;font-size:.85rem;margin-top:8px;width:100%}
+  #msg{margin-top:14px;padding:13px;border-radius:9px;display:none}
   #msg.ok{display:block;background:rgba(46,204,113,.15);border:1px solid var(--ok)}
   #msg.err{display:block;background:rgba(212,40,110,.15);border:1px solid var(--red)}
-  .hint{font-size:.78rem;color:var(--muted);margin-top:4px}
+  .overlay{position:fixed;inset:0;background:rgba(5,10,16,.93);display:flex;align-items:center;
+    justify-content:center;padding:20px;z-index:50}
+  .overlay .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:520px;width:100%;max-height:90vh;overflow:auto}
+  .warns{list-style:none;margin:10px 0}.warns li{background:rgba(245,197,24,.12);border:1px solid var(--warn);
+    border-radius:8px;padding:8px 10px;margin:6px 0;font-size:.86rem}
+  .sumtbl{width:100%;font-size:.88rem;margin:8px 0}.sumtbl td{padding:3px 0;border-bottom:1px solid var(--line)}
+  .sumtbl td:last-child{text-align:right;font-weight:600}
+  .hide{display:none!important}
 </style>
 </head>
 <body>
-  <h1>End-of-Day Close-Out</h1>
-  <div class="sub">Cross Creek Pak N Ship · complete after the register is counted and the USPS CPU end-of-day is run.</div>
+  <!-- PIN GATE -->
+  <div class="overlay" id="pinGate">
+    <div class="box" style="max-width:340px;text-align:center">
+      <h1 style="font-size:1.1rem;margin-bottom:6px">Staff PIN</h1>
+      <div class="sub">Enter the store PIN to continue.</div>
+      <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" style="text-align:center;font-size:1.4rem;letter-spacing:6px">
+      <button class="btn btn-primary" id="pinBtn" style="margin-top:12px">Unlock</button>
+      <div id="pinErr" style="color:var(--red);font-size:.85rem;margin-top:8px;display:none">Wrong PIN.</div>
+    </div>
+  </div>
 
-  <form id="form">
-    <!-- 1. SHIFT INFO -->
-    <fieldset>
-      <legend>1 · Shift</legend>
-      <div class="row">
-        <div>
-          <label class="req" for="date">Date</label>
-          <input type="date" id="date" name="date" required>
-        </div>
-        <div>
-          <label class="req" for="closedBy">Closed by</label>
-          <input type="text" id="closedBy" name="closedBy" placeholder="Your name" required>
-        </div>
-      </div>
-    </fieldset>
+  <div id="app" class="hide">
+    <h1>End-of-Day Close-Out</h1>
+    <div class="sub">Complete after the register is counted and the USPS CPU end-of-day is run.</div>
+    <nav>
+      <a class="on" href="?">Close-out</a>
+      <a href="?page=open">Opening</a>
+      <a href="?page=appt">Appointments</a>
+    </nav>
 
-    <!-- 2. MONEY -->
-    <fieldset>
-      <legend>2 · Money</legend>
-      <div class="row">
-        <div>
-          <label class="req" for="cash">Cash collected today ($)</label>
-          <input type="number" step="0.01" min="0" id="cash" name="cash" placeholder="0.00" required>
+    <form id="form">
+      <!-- 1. SHIFT -->
+      <fieldset>
+        <legend>1 · Shift</legend>
+        <div class="row">
+          <div><label class="req" for="date">Date</label><input type="date" id="date" required></div>
+          <div><label class="req" for="closedBy">Closed by</label><input type="text" id="closedBy" placeholder="Your name" required></div>
         </div>
-        <div>
-          <label class="req" for="ccCount"># of credit card payments</label>
-          <input type="number" step="1" min="0" id="ccCount" name="ccCount" placeholder="0" required>
-        </div>
-      </div>
-      <div class="row">
-        <div>
-          <label class="req" for="ccTotal">Credit card total ($)</label>
-          <input type="number" step="0.01" min="0" id="ccTotal" name="ccTotal" placeholder="0.00" required>
-        </div>
-        <div>
-          <label class="req" for="drawer">Money left in register ($)</label>
-          <input type="number" step="0.01" min="0" id="drawer" name="drawer" placeholder="0.00" required>
-        </div>
-      </div>
-      <div class="total"><span>Total sales (cash + card)</span><b id="totalSales">$0.00</b></div>
-    </fieldset>
+        <div id="dupWarn" class="hint" style="color:var(--warn);display:none">⚠️ A close-out already exists for this date.</div>
+      </fieldset>
 
-    <!-- 3. POSTAGE & PACKAGES -->
-    <fieldset>
-      <legend>3 · Postage &amp; Packages</legend>
-      <div class="row">
-        <div>
-          <label class="req" for="stamps">Stamp / postage value used ($)</label>
-          <input type="number" step="0.01" min="0" id="stamps" name="stamps" placeholder="0.00" required>
+      <!-- 2. MONEY -->
+      <fieldset>
+        <legend>2 · Money</legend>
+        <div class="row">
+          <div><label class="req" for="startingBank">Starting bank ($)</label><input type="number" step="0.01" min="0" id="startingBank" placeholder="0.00" required>
+            <div class="hint" id="bankNote"></div></div>
+          <div><label class="req" for="cash">Cash collected today ($)</label><input type="number" step="0.01" min="0" id="cash" placeholder="0.00" required></div>
         </div>
-        <div>
-          <label class="req" for="postageLeft">Postage balance left in CRM ($)</label>
-          <input type="number" step="0.01" min="0" id="postageLeft" name="postageLeft" placeholder="0.00" required>
+        <div class="row">
+          <div><label class="req" for="ccCount"># of credit card payments</label><input type="number" step="1" min="0" id="ccCount" placeholder="0" required></div>
+          <div><label class="req" for="ccTotal">Credit card total ($)</label><input type="number" step="0.01" min="0" id="ccTotal" placeholder="0.00" required></div>
         </div>
-      </div>
-      <div class="row">
-        <div>
-          <label class="req" for="prepaid">Prepaid packages processed (#)</label>
-          <input type="number" step="1" min="0" id="prepaid" name="prepaid" placeholder="0" required>
+        <div class="row">
+          <div><label for="pettyCash">Petty cash paid out ($)</label><input type="number" step="0.01" min="0" id="pettyCash" placeholder="0.00"></div>
+          <div><label class="req" for="drawerCounted">Total cash counted in drawer ($)</label><input type="number" step="0.01" min="0" id="drawerCounted" placeholder="0.00" required>
+            <div class="hint">Count everything in the drawer before pulling the deposit.</div></div>
         </div>
-        <div>
-          <label class="req" for="voided">Voided packages (#)</label>
-          <input type="number" step="1" min="0" id="voided" name="voided" placeholder="0" required>
+        <div class="calc">
+          <div class="line"><span>Total sales (cash + card)</span><b id="totalSales">$0.00</b></div>
+          <div class="line"><span>Expected drawer (bank + cash − petty)</span><span id="expected">$0.00</span></div>
+          <div class="line" id="osLine"><span>Over / Short</span><b id="overShort">$0.00</b></div>
+          <div class="line"><span>Deposit to pull (counted − bank)</span><span id="deposit">$0.00</span></div>
         </div>
-      </div>
-      <label class="req" for="photo">Photo of category-code report</label>
-      <input type="file" id="photo" name="photo" accept="image/*" capture="environment" required>
-      <div class="photo-note">Tap to take a photo of the printed category-code report, or upload an image.
-        The app will try to read it and fill in Postage used + Prepaid for you — <b>always verify</b>.</div>
-      <img id="preview" alt="report preview">
-      <div id="reportStatus" style="display:none;margin-top:8px;padding:9px 11px;border-radius:8px;font-size:.85rem"></div>
-    </fieldset>
+      </fieldset>
 
-    <!-- 4. PER-EMPLOYEE -->
-    <fieldset>
-      <legend>4 · Employees (one block each)</legend>
-      <div class="hint">Each worker on shift: clock times, customers helped, and how many customers they
-        told about notary &amp; passport renewal.</div>
-      <div id="employees"></div>
-      <button type="button" class="add" id="addEmp">+ Add employee</button>
-    </fieldset>
+      <!-- 3. POSTAGE & PACKAGES -->
+      <fieldset>
+        <legend>3 · Postage &amp; Packages</legend>
+        <div class="row">
+          <div><label class="req" for="stamps">Stamp / postage value used ($)</label><input type="number" step="0.01" min="0" id="stamps" placeholder="0.00" required></div>
+          <div><label class="req" for="postageLeft">Postage balance left in CRM ($)</label><input type="number" step="0.01" min="0" id="postageLeft" placeholder="0.00" required></div>
+        </div>
+        <div class="row">
+          <div><label class="req" for="prepaid">Prepaid packages (#)</label><input type="number" step="1" min="0" id="prepaid" placeholder="0" required></div>
+          <div><label class="req" for="voided">Voided packages (#)</label><input type="number" step="1" min="0" id="voided" placeholder="0" required></div>
+        </div>
+        <label class="req" for="photo">Photo of category-code report</label>
+        <input type="file" id="photo" accept="image/*" capture="environment" required>
+        <div class="photo-note">Lay the receipt flat for the clearest read. The app fills Postage used + Prepaid automatically — <b>verify them</b>.</div>
+        <button type="button" class="ghost" id="retake">Retake / change photo</button>
+        <img id="preview" alt="report preview">
+        <div id="reportStatus" style="display:none;margin-top:8px;padding:9px 11px;border-radius:8px;font-size:.85rem"></div>
+      </fieldset>
 
-    <button type="submit" class="submit" id="submitBtn">Submit close-out</button>
-    <div id="msg"></div>
-  </form>
+      <!-- 4. EMPLOYEES -->
+      <fieldset>
+        <legend>4 · Employees</legend>
+        <div class="hint">Each worker on shift: clock times, customers helped, and how many they told about notary &amp; passport renewal.</div>
+        <div id="employees"></div>
+        <button type="button" class="add" id="addEmp">+ Add employee</button>
+      </fieldset>
+
+      <!-- 5. NOTES -->
+      <fieldset>
+        <legend>5 · Notes</legend>
+        <textarea id="notes" rows="2" placeholder="Anything unusual: over/short reason, incidents, supplies needed…"></textarea>
+      </fieldset>
+
+      <button type="submit" class="btn btn-primary" id="reviewBtn">Review &amp; submit</button>
+      <button type="button" class="ghost" id="clearDraft">Clear saved draft</button>
+      <div id="msg"></div>
+    </form>
+  </div>
+
+  <!-- REVIEW OVERLAY -->
+  <div class="overlay hide" id="reviewGate">
+    <div class="box">
+      <h1 style="font-size:1.15rem">Review before submit</h1>
+      <ul class="warns hide" id="warnList"></ul>
+      <table class="sumtbl"><tbody id="reviewBody"></tbody></table>
+      <button class="btn btn-primary" id="confirmBtn">Confirm &amp; submit</button>
+      <button class="ghost" id="backBtn">Go back &amp; edit</button>
+    </div>
+  </div>
 
 <script>
-  // ---- default date = today ----
-  document.getElementById('date').valueAsDate = new Date();
+  var TOL = 5; // over/short tolerance in dollars (matches Code.gs default)
+  var hasGS = (typeof google !== 'undefined' && google.script && google.script.run);
+  var $ = function(id){ return document.getElementById(id); };
 
-  // ---- live total sales ----
-  function num(id){ return parseFloat(document.getElementById(id).value) || 0; }
-  function recalc(){
-    document.getElementById('totalSales').textContent =
-      '$' + (num('cash') + num('ccTotal')).toFixed(2);
-  }
-  ['cash','ccTotal'].forEach(id => document.getElementById(id).addEventListener('input', recalc));
-
-  // ---- employee blocks ----
-  const empWrap = document.getElementById('employees');
-  function addEmployee(){
-    const i = empWrap.children.length + 1;
-    const div = document.createElement('div');
-    div.className = 'emp';
-    div.innerHTML = `
-      <span class="rm">Remove</span>
-      <h4>Employee ${i}</h4>
-      <label>Name</label>
-      <input type="text" class="e-name" placeholder="Employee name">
-      <div class="row">
-        <div><label>Clock in</label><input type="time" class="e-in"></div>
-        <div><label>Clock out</label><input type="time" class="e-out"></div>
-      </div>
-      <div class="row">
-        <div><label>Customers helped</label><input type="number" min="0" step="1" class="e-cust" placeholder="0"></div>
-        <div><label># told: notary</label><input type="number" min="0" step="1" class="e-notary" placeholder="0"></div>
-        <div><label># told: passport</label><input type="number" min="0" step="1" class="e-passport" placeholder="0"></div>
-      </div>`;
-    div.querySelector('.rm').addEventListener('click', () => { div.remove(); renumber(); });
-    empWrap.appendChild(div);
-  }
-  function renumber(){
-    [...empWrap.children].forEach((d,idx)=> d.querySelector('h4').textContent = 'Employee ' + (idx+1));
-  }
-  document.getElementById('addEmp').addEventListener('click', addEmployee);
-  addEmployee(); // start with one
-
-  // ---- photo preview ----
-  const photoInput = document.getElementById('photo');
-  const preview = document.getElementById('preview');
-  const reportStatus = document.getElementById('reportStatus');
-  let photoData = null, photoName = '', photoType = '', reportData = null;
-
-  photoInput.addEventListener('change', () => {
-    const f = photoInput.files[0];
-    if(!f) return;
-    photoName = f.name; photoType = f.type;
-    const reader = new FileReader();
-    reader.onload = e => {
-      photoData = e.target.result.split(',')[1]; // strip data: prefix -> base64
-      preview.src = e.target.result;
-      preview.style.display = 'block';
-      readReport(); // auto-read the report photo
-    };
-    reader.readAsDataURL(f);
+  // ---------- PIN gate ----------
+  function unlock(){ $('pinGate').classList.add('hide'); $('app').classList.remove('hide'); init(); }
+  $('pinBtn').addEventListener('click', function(){
+    var pin = $('pinInput').value;
+    if(!hasGS){ unlock(); return; } // raw-file preview
+    google.script.run.withSuccessHandler(function(ok){
+      if(ok) unlock(); else { $('pinErr').style.display='block'; }
+    }).withFailureHandler(function(){ unlock(); }).validatePin(pin);
   });
+  $('pinInput').addEventListener('keydown', function(e){ if(e.key==='Enter') $('pinBtn').click(); });
 
-  function setReportStatus(text, kind){
-    const colors = {
-      work: ['rgba(245,197,24,.15)', '#F5C518'],
-      ok:   ['rgba(46,204,113,.15)', '#2ecc71'],
-      err:  ['rgba(212,40,110,.15)', '#D4286E']
-    }[kind] || ['rgba(255,255,255,.08)', 'rgba(255,255,255,.3)'];
-    reportStatus.style.display = 'block';
-    reportStatus.style.background = colors[0];
-    reportStatus.style.border = '1px solid ' + colors[1];
-    reportStatus.textContent = text;
+  // ---------- init after unlock ----------
+  function init(){
+    $('date').valueAsDate = new Date();
+    restoreDraft();
+    addEmployee();
+    if(hasGS){
+      google.script.run.withSuccessHandler(function(bank){
+        if(bank != null && bank !== '' && !$('startingBank').value){
+          $('startingBank').value = Number(bank).toFixed(2);
+          $('bankNote').textContent = 'Prefilled from this morning’s opening.';
+          recalc();
+        }
+      }).getOpeningBank($('date').value);
+    }
+    recalc();
+    checkDup();
   }
 
+  // ---------- live money math ----------
+  function num(id){ return parseFloat($(id).value) || 0; }
+  function money(v){ return '$' + v.toFixed(2); }
+  function recalc(){
+    var sales = num('cash') + num('ccTotal');
+    var expected = num('startingBank') + num('cash') - num('pettyCash');
+    var os = num('drawerCounted') - expected;
+    var dep = num('drawerCounted') - num('startingBank');
+    $('totalSales').textContent = money(sales);
+    $('expected').textContent = money(expected);
+    $('overShort').textContent = (os<0?'-$':'$') + Math.abs(os).toFixed(2);
+    $('deposit').textContent = money(dep);
+    $('osLine').classList.toggle('bad', Math.abs(os) > TOL);
+    saveDraft();
+  }
+  ['startingBank','cash','ccTotal','pettyCash','drawerCounted'].forEach(function(id){
+    $(id).addEventListener('input', recalc);
+  });
+  ['ccCount','stamps','postageLeft','prepaid','voided','closedBy','notes'].forEach(function(id){
+    $(id).addEventListener('input', saveDraft);
+  });
+  $('date').addEventListener('change', function(){ saveDraft(); checkDup(); });
+
+  // ---------- duplicate-day check ----------
+  function checkDup(){
+    if(!hasGS) return;
+    google.script.run.withSuccessHandler(function(exists){
+      $('dupWarn').style.display = exists ? 'block' : 'none';
+    }).closeoutExists($('date').value);
+  }
+
+  // ---------- employees ----------
+  var empWrap = $('employees');
+  function addEmployee(){
+    var div = document.createElement('div'); div.className='emp';
+    div.innerHTML =
+      '<span class="rm">Remove</span><h4></h4>'+
+      '<label>Name</label><input type="text" class="e-name" placeholder="Employee name">'+
+      '<div class="row"><div><label>Clock in</label><input type="time" class="e-in"></div>'+
+      '<div><label>Clock out</label><input type="time" class="e-out"></div></div>'+
+      '<div class="row"><div><label>Customers helped</label><input type="number" min="0" step="1" class="e-cust" placeholder="0"></div>'+
+      '<div><label># told: notary</label><input type="number" min="0" step="1" class="e-notary" placeholder="0"></div>'+
+      '<div><label># told: passport</label><input type="number" min="0" step="1" class="e-passport" placeholder="0"></div></div>';
+    div.querySelector('.rm').addEventListener('click', function(){ div.remove(); renumber(); saveDraft(); });
+    div.addEventListener('input', saveDraft);
+    empWrap.appendChild(div); renumber();
+  }
+  function renumber(){ [].forEach.call(empWrap.children, function(d,i){ d.querySelector('h4').textContent='Employee '+(i+1); }); }
+  function readEmployees(){
+    return [].map.call(empWrap.children, function(d){
+      return { name:d.querySelector('.e-name').value.trim(), clockIn:d.querySelector('.e-in').value,
+        clockOut:d.querySelector('.e-out').value, customers:parseInt(d.querySelector('.e-cust').value)||0,
+        notary:parseInt(d.querySelector('.e-notary').value)||0, passport:parseInt(d.querySelector('.e-passport').value)||0 };
+    }).filter(function(x){ return x.name; });
+  }
+  $('addEmp').addEventListener('click', addEmployee);
+
+  // ---------- photo: compress + auto-read ----------
+  var photoData=null, photoName='', photoType='image/jpeg', reportData=null;
+  $('retake').addEventListener('click', function(){ $('photo').value=''; photoData=null; $('preview').style.display='none'; $('photo').click(); });
+  $('photo').addEventListener('change', function(){
+    var f = $('photo').files[0]; if(!f) return;
+    photoName = (f.name||'report').replace(/\.[^.]+$/,'') + '.jpg';
+    var img = new Image(), url = URL.createObjectURL(f);
+    img.onload = function(){
+      var max=1600, s=Math.min(1, max/Math.max(img.width,img.height));
+      var c=document.createElement('canvas'); c.width=img.width*s; c.height=img.height*s;
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+      var dataUrl = c.toDataURL('image/jpeg',0.8);
+      photoData = dataUrl.split(',')[1];
+      $('preview').src = dataUrl; $('preview').style.display='block';
+      URL.revokeObjectURL(url);
+      readReport();
+    };
+    img.src = url;
+  });
+  function setRpt(text,kind){
+    var c={work:['rgba(245,197,24,.15)','#F5C518'],ok:['rgba(46,204,113,.15)','#2ecc71'],err:['rgba(212,40,110,.15)','#D4286E']}[kind]||['rgba(255,255,255,.08)','#888'];
+    var el=$('reportStatus'); el.style.display='block'; el.style.background=c[0]; el.style.border='1px solid '+c[1]; el.textContent=text;
+  }
   function readReport(){
     if(!photoData) return;
-    if(typeof google === 'undefined' || !google.script || !google.script.run){
-      setReportStatus('Auto-read works once deployed via Apps Script — enter postage/prepaid by hand for now.', 'work');
-      return;
-    }
-    setReportStatus('Reading report photo… (a few seconds)', 'work');
-    google.script.run
-      .withSuccessHandler(fillFromReport)
-      .withFailureHandler(err => setReportStatus(
-        'Couldn’t auto-read the report — enter Postage used + Prepaid by hand. ' +
-        (err && err.message ? '(' + err.message + ')' : ''), 'err'))
+    if(!hasGS){ setRpt('Auto-read works once deployed via Apps Script — enter postage/prepaid by hand.','work'); return; }
+    setRpt('Reading report photo… (a few seconds)','work');
+    google.script.run.withSuccessHandler(fillFromReport)
+      .withFailureHandler(function(err){ setRpt('Couldn’t auto-read — enter Postage used + Prepaid by hand. '+(err&&err.message?'('+err.message+')':''),'err'); })
       .extractReport(photoData, photoType);
   }
-
   function fillFromReport(r){
-    if(!r){ setReportStatus('No data read — enter Postage used + Prepaid by hand.', 'err'); return; }
+    if(!r){ setRpt('No data read — enter by hand.','err'); return; }
     reportData = r;
-    if(r.grandTotalValue != null) document.getElementById('stamps').value = Number(r.grandTotalValue).toFixed(2);
-    if(r.prepaidQty != null) document.getElementById('prepaid').value = r.prepaidQty;
+    if(r.grandTotalValue!=null) $('stamps').value = Number(r.grandTotalValue).toFixed(2);
+    if(r.prepaidQty!=null) $('prepaid').value = r.prepaidQty;
     recalc();
-    setReportStatus('✅ Read from photo: postage $' + Number(r.grandTotalValue||0).toFixed(2) +
-      ', prepaid ' + (r.prepaidQty||0) + '. Please verify, then add cash / card / register / voided.', 'ok');
+    setRpt('✅ Read: postage '+money(Number(r.grandTotalValue||0))+', prepaid '+(r.prepaidQty||0)+'. Verify, then add cash / card / register / voided.','ok');
   }
 
-  // ---- submit ----
-  const form = document.getElementById('form');
-  const btn = document.getElementById('submitBtn');
-  const msg = document.getElementById('msg');
-  form.addEventListener('submit', e => {
+  // ---------- draft autosave (no photo) ----------
+  var DRAFT='ccCloseoutDraft';
+  var DRAFT_FIELDS=['date','closedBy','startingBank','cash','ccCount','ccTotal','pettyCash','drawerCounted','stamps','postageLeft','prepaid','voided','notes'];
+  function saveDraft(){
+    try{
+      var o={}; DRAFT_FIELDS.forEach(function(id){ o[id]=$(id).value; });
+      o.employees = readEmployees();
+      localStorage.setItem(DRAFT, JSON.stringify(o));
+    }catch(e){}
+  }
+  function restoreDraft(){
+    try{
+      var o=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(!o) return;
+      DRAFT_FIELDS.forEach(function(id){ if(o[id]!=null && o[id]!=='') $(id).value=o[id]; });
+      (o.employees||[]).forEach(function(e){
+        addEmployee(); var d=empWrap.lastElementChild;
+        d.querySelector('.e-name').value=e.name||''; d.querySelector('.e-in').value=e.clockIn||'';
+        d.querySelector('.e-out').value=e.clockOut||''; d.querySelector('.e-cust').value=e.customers||'';
+        d.querySelector('.e-notary').value=e.notary||''; d.querySelector('.e-passport').value=e.passport||'';
+      });
+    }catch(e){}
+  }
+  $('clearDraft').addEventListener('click', function(){ localStorage.removeItem(DRAFT); location.reload(); });
+
+  // ---------- review + submit ----------
+  function gather(){
+    var cash=num('cash'), cc=num('ccTotal'), bank=num('startingBank'), petty=num('pettyCash'), counted=num('drawerCounted');
+    var expected=bank+cash-petty, os=counted-expected;
+    return { date:$('date').value, closedBy:$('closedBy').value.trim(),
+      startingBank:bank, cash:cash, ccCount:parseInt($('ccCount').value)||0, ccTotal:cc,
+      pettyCash:petty, drawerCounted:counted, totalSales:cash+cc, expected:expected, overShort:os,
+      stamps:num('stamps'), postageLeft:num('postageLeft'),
+      prepaid:parseInt($('prepaid').value)||0, voided:parseInt($('voided').value)||0,
+      employees:readEmployees(), notes:$('notes').value.trim(),
+      reportData:reportData, photoData:photoData, photoName:photoName, photoType:photoType };
+  }
+  function warnings(d){
+    var w=[];
+    if(Math.abs(d.overShort)>TOL) w.push('Drawer is '+(d.overShort<0?'SHORT':'OVER')+' by '+money(Math.abs(d.overShort))+' — recount or add a note.');
+    if(d.drawerCounted < d.startingBank) w.push('Drawer counted is less than the starting bank.');
+    if(d.stamps===0 && (d.prepaid>0 || d.voided>0)) w.push('Postage used is $0 but packages were processed.');
+    if(reportData && reportData.grandTotalValue!=null && Math.abs(reportData.grandTotalValue-d.stamps)>TOL)
+      w.push('Postage used ('+money(d.stamps)+') doesn’t match the photo total ('+money(reportData.grandTotalValue)+').');
+    if((d.ccCount>0&&d.ccTotal===0)||(d.ccTotal>0&&d.ccCount===0)) w.push('Credit-card count and total don’t agree.');
+    if(!d.employees.length) w.push('No employees entered.');
+    return w;
+  }
+  var pending=null;
+  $('form').addEventListener('submit', function(e){
     e.preventDefault();
     if(!photoData){ showMsg('err','Please attach the category-code report photo.'); return; }
-
-    const employees = [...empWrap.children].map(d => ({
-      name:     d.querySelector('.e-name').value.trim(),
-      clockIn:  d.querySelector('.e-in').value,
-      clockOut: d.querySelector('.e-out').value,
-      customers:parseInt(d.querySelector('.e-cust').value)||0,
-      notary:   parseInt(d.querySelector('.e-notary').value)||0,
-      passport: parseInt(d.querySelector('.e-passport').value)||0
-    })).filter(x => x.name);
-
-    const payload = {
-      date: document.getElementById('date').value,
-      closedBy: document.getElementById('closedBy').value.trim(),
-      cash: num('cash'),
-      ccCount: parseInt(document.getElementById('ccCount').value)||0,
-      ccTotal: num('ccTotal'),
-      totalSales: num('cash') + num('ccTotal'),
-      drawer: num('drawer'),
-      stamps: num('stamps'),
-      postageLeft: num('postageLeft'),
-      prepaid: parseInt(document.getElementById('prepaid').value)||0,
-      voided: parseInt(document.getElementById('voided').value)||0,
-      employees: employees,
-      reportData: reportData,
-      photoData: photoData, photoName: photoName, photoType: photoType
-    };
-
-    btn.disabled = true; btn.textContent = 'Submitting…';
-
-    // google.script.run is provided when this page is served by Apps Script.
-    if (typeof google !== 'undefined' && google.script && google.script.run){
-      google.script.run
-        .withSuccessHandler(onOk)
-        .withFailureHandler(onErr)
-        .submitCloseout(payload);
-    } else {
-      onErr({message:'Not running inside Apps Script. Deploy via Apps Script (see README) to enable saving.'});
-    }
+    pending = gather();
+    // build review
+    var w = warnings(pending);
+    var wl=$('warnList'); wl.innerHTML=''; wl.classList.toggle('hide', !w.length);
+    w.forEach(function(t){ var li=document.createElement('li'); li.textContent='⚠️ '+t; wl.appendChild(li); });
+    var rows=[['Date',pending.date],['Closed by',pending.closedBy],
+      ['Total sales',money(pending.totalSales)],['Expected drawer',money(pending.expected)],
+      ['Drawer counted',money(pending.drawerCounted)],['Over / Short',money(pending.overShort)],
+      ['Postage used',money(pending.stamps)],['Postage left in CRM',money(pending.postageLeft)],
+      ['Prepaid / Voided',pending.prepaid+' / '+pending.voided],['Employees',pending.employees.length]];
+    $('reviewBody').innerHTML = rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join('');
+    $('reviewGate').classList.remove('hide');
   });
+  $('backBtn').addEventListener('click', function(){ $('reviewGate').classList.add('hide'); });
+  $('confirmBtn').addEventListener('click', function(){
+    $('reviewGate').classList.add('hide');
+    var btn=$('reviewBtn'); btn.disabled=true; btn.textContent='Submitting…';
+    if(!hasGS){ onErr({message:'Not running inside Apps Script. Deploy via Apps Script to enable saving.'}); return; }
+    google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr).submitCloseout(pending);
+  });
+  function onOk(res){ localStorage.removeItem(DRAFT); showMsg('ok','✅ Saved. '+(res||'')+' You can close this page.'); $('reviewBtn').textContent='Submitted'; }
+  function onErr(err){ showMsg('err','⚠️ '+((err&&err.message)||'Submit failed.')); var b=$('reviewBtn'); b.disabled=false; b.textContent='Review & submit'; }
+  function showMsg(type,text){ var m=$('msg'); m.className=type; m.textContent=text; m.scrollIntoView({behavior:'smooth'}); }
 
-  function onOk(res){
-    showMsg('ok', '✅ Saved. ' + (res || '') + ' You can close this page.');
-    btn.textContent = 'Submitted';
-  }
-  function onErr(err){
-    showMsg('err', '⚠️ ' + (err && err.message ? err.message : 'Submit failed. Try again or tell the manager.'));
-    btn.disabled = false; btn.textContent = 'Submit close-out';
-  }
-  function showMsg(type, text){ msg.className = type; msg.textContent = text; msg.scrollIntoView({behavior:'smooth'}); }
+  // If no PIN configured server-side, validatePin returns true on click; also
+  // allow Enter. If the gate is disabled (STAFF_PIN=''), staff just press Unlock.
 </script>
 </body>
 </html>

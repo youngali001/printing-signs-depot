@@ -34,10 +34,15 @@ The commissionable mail figure auto-fills from the report photo (verify it).
 - **Passport renewals × $35**
 - **Notaries × $11**
 
-Enter the daily counts; the app shows **Estimated total income** = CPU pay +
-service income. Everything (CPU pay, passport/notary counts, service income,
-total income) is stored in the Closeouts sheet and rolled up on the Dashboard
-and in the weekly/monthly summary emails. Rates/fees live in
+> **Profit is owner-only.** Staff never see any pay/commission/income figures on
+> the form — they only enter raw inputs (mail revenue, passport #, notary #,
+> package counts). All profit math runs **on the server (Code.gs)**; the rates
+> aren't even in the page source. Results land only in the Google Sheet and the
+> summary emails, which the owner controls.
+
+Everything (CPU pay, passport/notary counts, service income, estimated total
+income) is computed server-side and stored in the Closeouts sheet, rolled up on
+the Dashboard and in the weekly/monthly summary emails. Rates/fees live in
 `CONFIG.COMMISSION_RATE`, `CONFIG.PREPAID_RATE`, `CONFIG.PASSPORT_FEE`, and
 `CONFIG.NOTARY_FEE` — edit if they change. *(8% stamp/product compensation is
 not included; add it later if you want.)*
@@ -60,6 +65,7 @@ sanity-check warnings**, and a **duplicate-day warning**.
 | `index.html` | HTML file named **`index`** (close-out) |
 | `opening.html` | HTML file named **`opening`** |
 | `appointments.html` | HTML file named **`appointments`** |
+| `gemini-dashboard-prompt.md` | reference — paste into Gemini in Sheets (not Apps Script) |
 
 ---
 

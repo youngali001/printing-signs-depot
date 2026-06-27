@@ -125,6 +125,20 @@
         <div id="reportStatus" style="display:none;margin-top:8px;padding:9px 11px;border-radius:8px;font-size:.85rem"></div>
       </fieldset>
 
+      <!-- 3b. CPU PAY -->
+      <fieldset>
+        <legend>Estimated CPU pay</legend>
+        <div class="hint">Contract pays 19.5% on weigh-in mail + special services, and $0.25 per prepaid piece.</div>
+        <label for="mailRevenue">Weigh-in + special services revenue ($)</label>
+        <input type="number" step="0.01" min="0" id="mailRevenue" placeholder="0.00">
+        <div class="hint">Mailing Services + Special Services from the report (auto-filled — verify). Affixed postage is excluded.</div>
+        <div class="calc">
+          <div class="line"><span>19.5% of mail revenue</span><span id="payMail">$0.00</span></div>
+          <div class="line"><span id="payPrepaidLbl">Prepaid × $0.25</span><span id="payPrepaid">$0.00</span></div>
+          <div class="line"><span>Estimated pay for the day</span><b id="estPay" style="color:var(--ok)">$0.00</b></div>
+        </div>
+      </fieldset>
+
       <!-- 4. EMPLOYEES -->
       <fieldset>
         <legend>4 · Employees</legend>
@@ -158,6 +172,7 @@
 
 <script>
   var TOL = 5; // over/short tolerance in dollars (matches Code.gs default)
+  var COMM = 0.195, PREPAID_RATE = 0.25; // CPU pay rates (match Code.gs CONFIG)
   var hasGS = (typeof google !== 'undefined' && google.script && google.script.run);
   var $ = function(id){ return document.getElementById(id); };
 
@@ -203,12 +218,24 @@
     $('overShort').textContent = (os<0?'-$':'$') + Math.abs(os).toFixed(2);
     $('deposit').textContent = money(dep);
     $('osLine').classList.toggle('bad', Math.abs(os) > TOL);
+    recalcPay();
     saveDraft();
+  }
+  function recalcPay(){
+    var mail = num('mailRevenue'), pre = parseInt($('prepaid').value) || 0;
+    var pm = mail * COMM, pp = pre * PREPAID_RATE;
+    $('payMail').textContent = money(pm);
+    $('payPrepaidLbl').textContent = 'Prepaid (' + pre + ') × $' + PREPAID_RATE.toFixed(2);
+    $('payPrepaid').textContent = money(pp);
+    $('estPay').textContent = money(pm + pp);
   }
   ['startingBank','cash','ccTotal','pettyCash','drawerCounted'].forEach(function(id){
     $(id).addEventListener('input', recalc);
   });
-  ['ccCount','stamps','postageLeft','prepaid','voided','closedBy','notes'].forEach(function(id){
+  ['mailRevenue','prepaid'].forEach(function(id){
+    $(id).addEventListener('input', function(){ recalcPay(); saveDraft(); });
+  });
+  ['ccCount','stamps','postageLeft','voided','closedBy','notes'].forEach(function(id){
     $(id).addEventListener('input', saveDraft);
   });
   $('date').addEventListener('change', function(){ saveDraft(); checkDup(); });
@@ -283,13 +310,24 @@
     reportData = r;
     if(r.grandTotalValue!=null) $('stamps').value = Number(r.grandTotalValue).toFixed(2);
     if(r.prepaidQty!=null) $('prepaid').value = r.prepaidQty;
+    // Commissionable base = Mailing Services + Special Services sections
+    var base = 0;
+    (r.sections||[]).forEach(function(s){
+      var nm = (s.name||'').toLowerCase();
+      if(nm.indexOf('mailing')>-1 || nm.indexOf('special')>-1){
+        var v = Number(s.subtotalValue) || 0;
+        if(!v){ (s.lines||[]).forEach(function(l){ v += Number(l.value)||0; }); }
+        base += v;
+      }
+    });
+    if(base) $('mailRevenue').value = base.toFixed(2);
     recalc();
     setRpt('✅ Read: postage '+money(Number(r.grandTotalValue||0))+', prepaid '+(r.prepaidQty||0)+'. Verify, then add cash / card / register / voided.','ok');
   }
 
   // ---------- draft autosave (no photo) ----------
   var DRAFT='ccCloseoutDraft';
-  var DRAFT_FIELDS=['date','closedBy','startingBank','cash','ccCount','ccTotal','pettyCash','drawerCounted','stamps','postageLeft','prepaid','voided','notes'];
+  var DRAFT_FIELDS=['date','closedBy','startingBank','cash','ccCount','ccTotal','pettyCash','drawerCounted','stamps','postageLeft','prepaid','voided','mailRevenue','notes'];
   function saveDraft(){
     try{
       var o={}; DRAFT_FIELDS.forEach(function(id){ o[id]=$(id).value; });
@@ -320,6 +358,7 @@
       pettyCash:petty, drawerCounted:counted, totalSales:cash+cc, expected:expected, overShort:os,
       stamps:num('stamps'), postageLeft:num('postageLeft'),
       prepaid:parseInt($('prepaid').value)||0, voided:parseInt($('voided').value)||0,
+      mailRevenue:num('mailRevenue'),
       employees:readEmployees(), notes:$('notes').value.trim(),
       reportData:reportData, photoData:photoData, photoName:photoName, photoType:photoType };
   }
@@ -347,7 +386,9 @@
       ['Total sales',money(pending.totalSales)],['Expected drawer',money(pending.expected)],
       ['Drawer counted',money(pending.drawerCounted)],['Over / Short',money(pending.overShort)],
       ['Postage used',money(pending.stamps)],['Postage left in CRM',money(pending.postageLeft)],
-      ['Prepaid / Voided',pending.prepaid+' / '+pending.voided],['Employees',pending.employees.length]];
+      ['Prepaid / Voided',pending.prepaid+' / '+pending.voided],
+      ['Est. CPU pay',money(pending.mailRevenue*COMM + pending.prepaid*PREPAID_RATE)],
+      ['Employees',pending.employees.length]];
     $('reviewBody').innerHTML = rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join('');
     $('reviewGate').classList.remove('hide');
   });

@@ -47,7 +47,12 @@ var CONFIG = {
   OVER_SHORT_TOLERANCE: 5,
 
   // Email an alert when postage left in the CRM drops below this.
-  POSTAGE_ALERT_THRESHOLD: 200
+  POSTAGE_ALERT_THRESHOLD: 200,
+
+  // CPU compensation (Attachment 4 of the USPS contract).
+  // 19.5% on weigh-in mail + special services; $0.25 per prepaid piece.
+  COMMISSION_RATE: 0.195,
+  PREPAID_RATE: 0.25
 };
 // ===================================================================
 
@@ -151,6 +156,11 @@ function submitCloseout(data) {
   var expected = startingBank + cash - pettyCash;
   var overShort = drawerCounted - expected;
 
+  // CPU pay: 19.5% of weigh-in mail + special services, plus $0.25/prepaid piece
+  var mailRevenue = n_(data.mailRevenue);
+  var prepaidPieces = n_(data.prepaid);
+  var estPay = mailRevenue * CONFIG.COMMISSION_RATE + prepaidPieces * CONFIG.PREPAID_RATE;
+
   // Save the photo to Drive
   var photoUrl = '';
   if (data.photoData) {
@@ -172,13 +182,15 @@ function submitCloseout(data) {
     'CC payments (#)', 'CC total ($)', 'Total sales ($)', 'Petty cash out ($)',
     'Drawer counted ($)', 'Expected drawer ($)', 'Over/Short ($)',
     'Stamps used ($)', 'Postage left in CRM ($)', 'Prepaid pkgs', 'Voided pkgs',
-    '# Employees', 'Report photo', 'Notes'
+    '# Employees', 'Report photo', 'Notes',
+    'Commissionable mail ($)', 'Est. CPU pay ($)'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, startingBank, cash, data.ccCount,
     ccTotal, totalSales, pettyCash, drawerCounted, expected, overShort,
     n_(data.stamps), n_(data.postageLeft), data.prepaid, data.voided,
-    emps.length, photoUrl, data.notes || ''
+    emps.length, photoUrl, data.notes || '',
+    mailRevenue, estPay
   ]);
 
   // Per-employee rows
@@ -209,7 +221,7 @@ function submitCloseout(data) {
 
   // Emails
   if (CONFIG.SEND_EMAIL && CONFIG.EMAIL_TO) {
-    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales);
+    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay);
   }
   if (n_(data.postageLeft) < CONFIG.POSTAGE_ALERT_THRESHOLD && CONFIG.EMAIL_TO) {
     MailApp.sendEmail(CONFIG.EMAIL_TO,
@@ -259,13 +271,13 @@ function periodSummary_(days, label) {
   if (!sh) return;
   var rows = sh.getDataRange().getValues();
   var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-  var t = { sales: 0, cash: 0, card: 0, stamps: 0, prepaid: 0, voided: 0, os: 0, n: 0 };
+  var t = { sales: 0, cash: 0, card: 0, stamps: 0, prepaid: 0, voided: 0, os: 0, pay: 0, n: 0 };
   for (var i = 1; i < rows.length; i++) {
     var d = new Date(rows[i][1]);
     if (d >= cutoff) {
       t.sales += n_(rows[i][7]); t.cash += n_(rows[i][4]); t.card += n_(rows[i][6]);
       t.stamps += n_(rows[i][12]); t.prepaid += n_(rows[i][14]); t.voided += n_(rows[i][15]);
-      t.os += n_(rows[i][11]); t.n++;
+      t.os += n_(rows[i][11]); t.pay += n_(rows[i][20]); t.n++;
     }
   }
   MailApp.sendEmail(CONFIG.EMAIL_TO, label + ' summary — ' + t.n + ' days',
@@ -274,7 +286,8 @@ function periodSummary_(days, label) {
       'Cash: $' + t.cash.toFixed(2) + '   Card: $' + t.card.toFixed(2),
       'Stamps/postage used: $' + t.stamps.toFixed(2),
       'Prepaid packages: ' + t.prepaid + '   Voided: ' + t.voided,
-      'Net over/short: $' + t.os.toFixed(2)].join('\n'));
+      'Net over/short: $' + t.os.toFixed(2),
+      'Estimated CPU pay: $' + t.pay.toFixed(2)].join('\n'));
 }
 
 // ---- One-time analytics tab builder ---------------------------------
@@ -293,7 +306,8 @@ function buildDashboard() {
   var kpis = [
     ['Total sales', monthSum('H')], ['Cash', monthSum('E')], ['Card', monthSum('G')],
     ['Stamps/postage used', monthSum('M')], ['Prepaid packages', monthSum('O')],
-    ['Voided packages', monthSum('P')], ['Net over/short', monthSum('L')]
+    ['Voided packages', monthSum('P')], ['Net over/short', monthSum('L')],
+    ['Commissionable mail', monthSum('T')], ['Est. CPU pay', monthSum('U')]
   ];
   d.getRange('A4').setValue('Metric').setFontWeight('bold');
   d.getRange('B4').setValue('This month').setFontWeight('bold');
@@ -315,7 +329,7 @@ function buildDashboard() {
 }
 
 // ---- Email body for daily close-out ---------------------------------
-function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales) {
+function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay) {
   var lines = [
     'Cross Creek Pak N Ship — End-of-Day Close-Out', '',
     'Date: ' + data.date, 'Closed by: ' + data.closedBy, '',
@@ -332,6 +346,9 @@ function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales) {
     'Stamps/postage used: $' + n_(data.stamps).toFixed(2),
     'Postage left in CRM: $' + n_(data.postageLeft).toFixed(2),
     'Prepaid packages: ' + data.prepaid, 'Voided packages: ' + data.voided, '',
+    'Commissionable mail (weigh-in + special): $' + n_(mailRevenue).toFixed(2),
+    'Estimated CPU pay (19.5% mail + $' + CONFIG.PREPAID_RATE + '/prepaid): $' + n_(estPay).toFixed(2),
+    '',
     'Report photo: ' + (photoUrl || '(none)'),
     'Notes: ' + (data.notes || '(none)'), '', 'Employees:'
   ];

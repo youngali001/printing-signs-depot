@@ -20,6 +20,20 @@ Script**. One deployment serves three pages staff open on a phone/tablet:
 5. **Files the report photo** into a Drive folder.
 6. **Emails the summary**, and sends a **low-postage alert** when the CRM
    balance is below the threshold.
+7. **Estimates your CPU pay** for the day (see below).
+
+## Profit / CPU pay
+Per your USPS contract (Attachment 4), the app estimates daily compensation:
+- **19.5%** of weigh-in mail + special services (Mailing Services + Special
+  Services on the report — affixed postage is excluded), plus
+- **$0.25 per prepaid piece**.
+
+The commissionable mail figure auto-fills from the report photo (verify it).
+Daily **Est. CPU pay** is stored in the Closeouts sheet and rolled up on the
+Dashboard and in the weekly/monthly summary emails. Rates live in
+`CONFIG.COMMISSION_RATE` and `CONFIG.PREPAID_RATE` — edit them if USPS adjusts
+your contract. *(8% stamp/product compensation is not included; add it later if
+you want.)*
 
 Built-in safeguards: **PIN gate**, **draft auto-save** (survives a refresh /
 dropped connection), **photo compression + retake**, a **review screen with
@@ -63,6 +77,7 @@ sanity-check warnings**, and a **duplicate-day warning**.
    - `STAFF_PIN` → the shared PIN staff type to open the app (set `''` for none)
    - `OVER_SHORT_TOLERANCE` → dollars before a till variance is flagged
    - `POSTAGE_ALERT_THRESHOLD` → CRM balance that triggers the low-postage email
+   - `COMMISSION_RATE` (0.195) / `PREPAID_RATE` (0.25) → CPU pay rates
 4. Add the three HTML files: **+** next to *Files* → **HTML** → name it exactly
    `index`, then again for `opening`, then `appointments` — pasting each
    file's contents.

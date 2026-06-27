@@ -82,7 +82,9 @@ var CONFIG = {
 function doGet(e) {
   var page = (e && e.parameter && e.parameter.page) || '';
   var file = page === 'open' ? 'opening' : (page === 'appt' ? 'appointments' : 'index');
-  return HtmlService.createHtmlOutputFromFile(file)
+  var t = HtmlService.createTemplateFromFile(file);
+  t.appUrl = ScriptApp.getService().getUrl(); // real /exec URL for nav links
+  return t.evaluate()
     .setTitle('Cross Creek Pak N Ship')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
 }
@@ -204,19 +206,13 @@ function submitCloseout(data) {
 
   var estTotalIncome = estPay + serviceIncome + suppliesIncome;
 
-  // Save the photo to Drive
-  var photoUrl = '';
-  if (data.photoData) {
-    var folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
-    var ext = (data.photoName && data.photoName.indexOf('.') > -1)
-      ? data.photoName.substring(data.photoName.lastIndexOf('.')) : '.jpg';
-    var safeCloser = (data.closedBy || 'unknown').replace(/[^\w\-]+/g, '_');
-    var blob = Utilities.newBlob(
-      Utilities.base64Decode(data.photoData),
-      data.photoType || 'image/jpeg',
-      data.date + '_category-report_' + safeCloser + ext);
-    photoUrl = folder.createFile(blob).getUrl();
-  }
+  // Save the photos to Drive
+  var folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
+  var safeCloser = (data.closedBy || 'unknown').replace(/[^\w\-]+/g, '_');
+  var photoUrl = savePhoto_(folder, data.photoData, data.photoName, data.photoType,
+    data.date + '_category-report_' + safeCloser);
+  var financialUrl = savePhoto_(folder, data.financialPhotoData, data.financialPhotoName,
+    data.financialPhotoType, data.date + '_financial-summary_' + safeCloser);
 
   // Summary row
   var emps = data.employees || [];
@@ -228,7 +224,8 @@ function submitCloseout(data) {
     '# Employees', 'Report photo', 'Notes',
     'Commissionable mail ($)', 'Est. CPU pay ($)',
     'Passport renewals (#)', 'Notaries (#)', 'Service income ($)', 'Est. total income ($)',
-    'Fax pages (#)', 'Copies 1-3 (#)', 'Copies 4-10 (#)', 'Supplies income ($)'
+    'Fax pages (#)', 'Copies 1-3 (#)', 'Copies 4-10 (#)', 'Supplies income ($)',
+    'Financial summary photo'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, startingBank, cash, data.ccCount,
@@ -237,7 +234,8 @@ function submitCloseout(data) {
     emps.length, photoUrl, data.notes || '',
     mailRevenue, estPay,
     passportCount, notaryCount, serviceIncome, estTotalIncome,
-    faxPages, copySmall, copyLarge, suppliesIncome
+    faxPages, copySmall, copyLarge, suppliesIncome,
+    financialUrl
   ]);
 
   // Supplies sold — one row per item (qty > 0) in "Supplies"
@@ -252,15 +250,16 @@ function submitCloseout(data) {
     });
   }
 
-  // Per-employee rows
+  // Per-employee rows (hours worked computed from clock in/out)
   if (emps.length) {
     var empSheet = getOrCreateSheet(ss, 'Employees', [
-      'Timestamp', 'Date', 'Employee', 'Clock in', 'Clock out',
+      'Timestamp', 'Date', 'Employee', 'Clock in', 'Clock out', 'Hours worked',
       'Customers helped', 'Told notary', 'Told passport', 'Closed by'
     ]);
     var now = new Date();
     emps.forEach(function (e) {
       empSheet.appendRow([now, data.date, e.name, e.clockIn, e.clockOut,
+        hoursWorked_(e.clockIn, e.clockOut),
         e.customers, e.notary, e.passport, data.closedBy]);
     });
   }
@@ -387,9 +386,9 @@ function buildDashboard() {
   }
   var r = 5 + kpis.length + 2; // running row, with a gap after the KPI block
 
-  d.getRange(r, 1).setValue('Per-employee upsell (all-time)').setFontWeight('bold');
+  d.getRange(r, 1).setValue('Per-employee totals (all-time)').setFontWeight('bold');
   d.getRange(r + 1, 1).setFormula(
-    "=QUERY(Employees!A2:I,\"select C, sum(F), sum(G), sum(H) where C is not null group by C label C 'Employee', sum(F) 'Customers', sum(G) 'Told notary', sum(H) 'Told passport'\",0)");
+    "=QUERY(Employees!A2:J,\"select C, sum(G), sum(H), sum(I), sum(F) where C is not null group by C label C 'Employee', sum(G) 'Customers', sum(H) 'Told notary', sum(I) 'Told passport', sum(F) 'Hours'\",0)");
   r += 15;
   d.getRange(r, 1).setValue('Category mix by section (all-time)').setFontWeight('bold');
   d.getRange(r + 1, 1).setFormula(
@@ -461,6 +460,25 @@ function getOrCreateSheet(ss, name, headers) {
   return sheet;
 }
 function n_(v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; }
+
+/** Save a base64 photo to the folder; returns its URL, or '' if none. */
+function savePhoto_(folder, b64, name, type, baseName) {
+  if (!b64) return '';
+  var ext = (name && name.indexOf('.') > -1) ? name.substring(name.lastIndexOf('.')) : '.jpg';
+  var blob = Utilities.newBlob(Utilities.base64Decode(b64), type || 'image/jpeg', baseName + ext);
+  return folder.createFile(blob).getUrl();
+}
+
+/** Precise hours between two "HH:MM" times (handles past-midnight); '' if missing. */
+function hoursWorked_(inStr, outStr) {
+  if (!inStr || !outStr) return '';
+  var a = String(inStr).split(':'), b = String(outStr).split(':');
+  if (a.length < 2 || b.length < 2) return '';
+  var mins = (parseInt(b[0], 10) * 60 + parseInt(b[1], 10)) -
+             (parseInt(a[0], 10) * 60 + parseInt(a[1], 10));
+  if (mins < 0) mins += 1440; // crossed midnight
+  return Math.round((mins / 60) * 100) / 100;
+}
 function ymd_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   return String(v).slice(0, 10);

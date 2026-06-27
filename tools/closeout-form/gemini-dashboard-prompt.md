@@ -1,12 +1,26 @@
-# Gemini-in-Sheets dashboard prompt
+# Dashboard for the close-out spreadsheet
 
-Open the close-out spreadsheet → click the **Gemini ✦** icon (top-right) →
-paste the prompt below. It builds an owner dashboard from the tabs the web app
-fills. (You can also run `buildDashboard` in Apps Script for a formula-based
-version — this prompt is the flexible alternative.)
+> **RECOMMENDED: use `buildDashboard`, not Gemini.** Gemini-in-Sheets writes
+> formulas by guessing column positions and will sometimes drop wrong/random
+> numbers into cells ("hallucinations"). The reliable, deterministic way is the
+> built-in `buildDashboard` function:
+>
+> 1. In the Apps Script editor, pick **`buildDashboard`** from the function
+>    dropdown → **Run** (after at least one close-out exists).
+> 2. It creates/refreshes a **Dashboard** tab with exact SUMIFS/QUERY formulas
+>    matched to the real columns. Re-run it any time.
+>
+> The data tabs (Closeouts, Employees, etc.) are written directly by the web
+> app with exact values — they don't hallucinate. If a tab has junk in it from
+> an earlier Gemini attempt, clear that tab; the app rebuilds headers on the
+> next submit. **Don't let Gemini write into the data tabs.**
 
-> Note: this dashboard shows profit/income. Keep the spreadsheet shared with
-> owners/managers only — staff use the web app, which never shows these figures.
+The Gemini prompt below is only a fallback if you specifically want Gemini to
+build it. If it produces odd numbers, delete the Dashboard tab it made and use
+`buildDashboard` instead.
+
+> Keep the spreadsheet shared with owners/managers only — staff use the web app,
+> which never shows profit/income figures.
 
 ---
 
@@ -21,11 +35,12 @@ TAB "Closeouts" — one row per day:
   Prepaid pkgs, Voided pkgs, # Employees, Report photo, Notes,
   Commissionable mail ($), Est. CPU pay ($), Passport renewals (#),
   Notaries (#), Service income ($), Est. total income ($),
-  Fax pages (#), Copies 1-3 (#), Copies 4-10 (#), Supplies income ($)
+  Fax pages (#), Copies 1-3 (#), Copies 4-10 (#), Supplies income ($),
+  Financial summary photo
 
 TAB "Employees" — one row per employee per day:
-- Timestamp, Date, Employee, Clock in, Clock out, Customers helped,
-  Told notary, Told passport, Closed by
+- Timestamp, Date, Employee, Clock in, Clock out, Hours worked,
+  Customers helped, Told notary, Told passport, Closed by
 
 TAB "Report Lines" — one row per line of the daily USPS category-code report:
 - Timestamp, Date, Section, CAT, Description, Qty, Value ($)

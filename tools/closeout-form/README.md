@@ -13,11 +13,12 @@ Script**. One deployment serves three pages staff open on a phone/tablet:
 1. **Over/short** — computes expected drawer (starting bank + cash − petty cash)
    vs. counted, and flags when the till is off by more than the tolerance.
 2. **Writes a summary row** to the **Closeouts** sheet.
-3. **Logs each employee** (name, clock in/out, customers helped, notary &
-   passport mentions) to **Employees**.
+3. **Logs the employee** (name, clock in/out, **hours worked auto-calculated**,
+   customers helped, notary & passport mentions) to **Employees**.
 4. **Auto-reads the category-code report photo** (Gemini Vision): fills Postage
    used + Prepaid, and saves every report line to **Report Lines**.
-5. **Files the report photo** into a Drive folder.
+5. **Files both photos** (category-code report + financial summary report) into
+   the Drive folder.
 6. **Emails the summary**, and sends a **low-postage alert** when the CRM
    balance is below the threshold.
 7. **Estimates your CPU pay** for the day (see below).
@@ -54,6 +55,16 @@ not included; add it later if you want.)*
 Built-in safeguards: **PIN gate**, **draft auto-save** (survives a refresh /
 dropped connection), **photo compression + retake**, a **review screen with
 sanity-check warnings**, and a **duplicate-day warning**.
+
+Notes: the **starting bank defaults to $111**; the close-out takes **two
+photos** (category-code report + financial summary report); only **one
+employee** is logged per close-out.
+
+## Dashboard — use `buildDashboard`, not Gemini
+Run **`buildDashboard`** from the Apps Script editor to create/refresh the
+Dashboard tab with exact formulas. Avoid the Gemini-in-Sheets auto-build — it
+guesses column positions and can drop wrong numbers into cells. See
+`gemini-dashboard-prompt.md` for details.
 
 > Cash, card totals, money in register, and postage left in CRM aren't on the
 > report photo — those always come from the register/CRM and stay manual.

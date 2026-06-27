@@ -29,11 +29,18 @@ Per your USPS contract (Attachment 4), the app estimates daily compensation:
 - **$0.25 per prepaid piece**.
 
 The commissionable mail figure auto-fills from the report photo (verify it).
-Daily **Est. CPU pay** is stored in the Closeouts sheet and rolled up on the
-Dashboard and in the weekly/monthly summary emails. Rates live in
-`CONFIG.COMMISSION_RATE` and `CONFIG.PREPAID_RATE` — edit them if USPS adjusts
-your contract. *(8% stamp/product compensation is not included; add it later if
-you want.)*
+
+**In-house services** are added on top (100% store revenue, not USPS):
+- **Passport renewals × $35**
+- **Notaries × $11**
+
+Enter the daily counts; the app shows **Estimated total income** = CPU pay +
+service income. Everything (CPU pay, passport/notary counts, service income,
+total income) is stored in the Closeouts sheet and rolled up on the Dashboard
+and in the weekly/monthly summary emails. Rates/fees live in
+`CONFIG.COMMISSION_RATE`, `CONFIG.PREPAID_RATE`, `CONFIG.PASSPORT_FEE`, and
+`CONFIG.NOTARY_FEE` — edit if they change. *(8% stamp/product compensation is
+not included; add it later if you want.)*
 
 Built-in safeguards: **PIN gate**, **draft auto-save** (survives a refresh /
 dropped connection), **photo compression + retake**, a **review screen with
@@ -78,6 +85,7 @@ sanity-check warnings**, and a **duplicate-day warning**.
    - `OVER_SHORT_TOLERANCE` → dollars before a till variance is flagged
    - `POSTAGE_ALERT_THRESHOLD` → CRM balance that triggers the low-postage email
    - `COMMISSION_RATE` (0.195) / `PREPAID_RATE` (0.25) → CPU pay rates
+   - `PASSPORT_FEE` (35) / `NOTARY_FEE` (11) → in-house service fees
 4. Add the three HTML files: **+** next to *Files* → **HTML** → name it exactly
    `index`, then again for `opening`, then `appointments` — pasting each
    file's contents.

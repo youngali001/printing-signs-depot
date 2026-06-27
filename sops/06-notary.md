@@ -67,10 +67,15 @@ Keep the journal **secured and confidential** — it's locked up at close
 
 ## 6. Fees
 
-- Florida caps the notary fee per signature/act `[CONFIRM: current FL maximum]`.
-  Do not exceed it.
+- Our notary fee is **$11 per notary act**.
+- Florida law caps the notarial fee per signature/act `[CONFIRM: current FL
+  maximum — verify our $11 is within the cap, or that the difference is a
+  separate, clearly itemized service charge]`. Never exceed the legal cap on the
+  notarial act itself.
 - Post the fee. Charge consistently. Add‑on services (printing, copies, witness
   coordination) are billed separately under their own SOPs.
+- Record each notary on the end-of-day close-out (Notaries #) so it's tracked
+  in daily income.
 
 ## 7. When to decline (and how)
 

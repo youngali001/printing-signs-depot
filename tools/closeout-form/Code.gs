@@ -52,7 +52,11 @@ var CONFIG = {
   // CPU compensation (Attachment 4 of the USPS contract).
   // 19.5% on weigh-in mail + special services; $0.25 per prepaid piece.
   COMMISSION_RATE: 0.195,
-  PREPAID_RATE: 0.25
+  PREPAID_RATE: 0.25,
+
+  // In-house service fees (100% store revenue, not USPS).
+  PASSPORT_FEE: 35,
+  NOTARY_FEE: 11
 };
 // ===================================================================
 
@@ -161,6 +165,12 @@ function submitCloseout(data) {
   var prepaidPieces = n_(data.prepaid);
   var estPay = mailRevenue * CONFIG.COMMISSION_RATE + prepaidPieces * CONFIG.PREPAID_RATE;
 
+  // In-house service income
+  var passportCount = n_(data.passportCount);
+  var notaryCount = n_(data.notaryCount);
+  var serviceIncome = passportCount * CONFIG.PASSPORT_FEE + notaryCount * CONFIG.NOTARY_FEE;
+  var estTotalIncome = estPay + serviceIncome;
+
   // Save the photo to Drive
   var photoUrl = '';
   if (data.photoData) {
@@ -183,14 +193,16 @@ function submitCloseout(data) {
     'Drawer counted ($)', 'Expected drawer ($)', 'Over/Short ($)',
     'Stamps used ($)', 'Postage left in CRM ($)', 'Prepaid pkgs', 'Voided pkgs',
     '# Employees', 'Report photo', 'Notes',
-    'Commissionable mail ($)', 'Est. CPU pay ($)'
+    'Commissionable mail ($)', 'Est. CPU pay ($)',
+    'Passport renewals (#)', 'Notaries (#)', 'Service income ($)', 'Est. total income ($)'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, startingBank, cash, data.ccCount,
     ccTotal, totalSales, pettyCash, drawerCounted, expected, overShort,
     n_(data.stamps), n_(data.postageLeft), data.prepaid, data.voided,
     emps.length, photoUrl, data.notes || '',
-    mailRevenue, estPay
+    mailRevenue, estPay,
+    passportCount, notaryCount, serviceIncome, estTotalIncome
   ]);
 
   // Per-employee rows
@@ -221,7 +233,7 @@ function submitCloseout(data) {
 
   // Emails
   if (CONFIG.SEND_EMAIL && CONFIG.EMAIL_TO) {
-    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay);
+    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, estTotalIncome);
   }
   if (n_(data.postageLeft) < CONFIG.POSTAGE_ALERT_THRESHOLD && CONFIG.EMAIL_TO) {
     MailApp.sendEmail(CONFIG.EMAIL_TO,
@@ -271,13 +283,16 @@ function periodSummary_(days, label) {
   if (!sh) return;
   var rows = sh.getDataRange().getValues();
   var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-  var t = { sales: 0, cash: 0, card: 0, stamps: 0, prepaid: 0, voided: 0, os: 0, pay: 0, n: 0 };
+  var t = { sales: 0, cash: 0, card: 0, stamps: 0, prepaid: 0, voided: 0, os: 0,
+    pay: 0, passport: 0, notary: 0, svc: 0, income: 0, n: 0 };
   for (var i = 1; i < rows.length; i++) {
     var d = new Date(rows[i][1]);
     if (d >= cutoff) {
       t.sales += n_(rows[i][7]); t.cash += n_(rows[i][4]); t.card += n_(rows[i][6]);
       t.stamps += n_(rows[i][12]); t.prepaid += n_(rows[i][14]); t.voided += n_(rows[i][15]);
-      t.os += n_(rows[i][11]); t.pay += n_(rows[i][20]); t.n++;
+      t.os += n_(rows[i][11]); t.pay += n_(rows[i][20]);
+      t.passport += n_(rows[i][21]); t.notary += n_(rows[i][22]);
+      t.svc += n_(rows[i][23]); t.income += n_(rows[i][24]); t.n++;
     }
   }
   MailApp.sendEmail(CONFIG.EMAIL_TO, label + ' summary — ' + t.n + ' days',
@@ -287,7 +302,10 @@ function periodSummary_(days, label) {
       'Stamps/postage used: $' + t.stamps.toFixed(2),
       'Prepaid packages: ' + t.prepaid + '   Voided: ' + t.voided,
       'Net over/short: $' + t.os.toFixed(2),
-      'Estimated CPU pay: $' + t.pay.toFixed(2)].join('\n'));
+      'Estimated CPU pay: $' + t.pay.toFixed(2),
+      'Passport renewals: ' + t.passport + '   Notaries: ' + t.notary,
+      'Service income: $' + t.svc.toFixed(2),
+      'ESTIMATED TOTAL INCOME: $' + t.income.toFixed(2)].join('\n'));
 }
 
 // ---- One-time analytics tab builder ---------------------------------
@@ -307,7 +325,9 @@ function buildDashboard() {
     ['Total sales', monthSum('H')], ['Cash', monthSum('E')], ['Card', monthSum('G')],
     ['Stamps/postage used', monthSum('M')], ['Prepaid packages', monthSum('O')],
     ['Voided packages', monthSum('P')], ['Net over/short', monthSum('L')],
-    ['Commissionable mail', monthSum('T')], ['Est. CPU pay', monthSum('U')]
+    ['Commissionable mail', monthSum('T')], ['Est. CPU pay', monthSum('U')],
+    ['Passport renewals', monthSum('V')], ['Notaries', monthSum('W')],
+    ['Service income', monthSum('X')], ['Est. TOTAL income', monthSum('Y')]
   ];
   d.getRange('A4').setValue('Metric').setFontWeight('bold');
   d.getRange('B4').setValue('This month').setFontWeight('bold');
@@ -315,21 +335,21 @@ function buildDashboard() {
     d.getRange(5 + i, 1).setValue(kpis[i][0]);
     d.getRange(5 + i, 2).setFormula(kpis[i][1]);
   }
-  d.getRange('A14').setValue('Per-employee upsell (all-time)').setFontWeight('bold');
-  d.getRange('A15').setFormula(
+  d.getRange('A20').setValue('Per-employee upsell (all-time)').setFontWeight('bold');
+  d.getRange('A21').setFormula(
     "=QUERY(Employees!A2:I,\"select C, sum(F), sum(G), sum(H) where C is not null group by C label C 'Employee', sum(F) 'Customers', sum(G) 'Told notary', sum(H) 'Told passport'\",0)");
-  d.getRange('A30').setValue('Category mix by section (all-time)').setFontWeight('bold');
-  d.getRange('A31').setFormula(
+  d.getRange('A36').setValue('Category mix by section (all-time)').setFontWeight('bold');
+  d.getRange('A37').setFormula(
     "=QUERY('Report Lines'!A2:G,\"select C, sum(F), sum(G) where C is not null group by C label C 'Section', sum(F) 'Qty', sum(G) 'Value'\",0)");
-  d.getRange('A45').setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
-  d.getRange('A46').setFormula(
+  d.getRange('A51').setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
+  d.getRange('A52').setFormula(
     "=QUERY('Report Lines'!A2:G,\"select D, sum(G), sum(F) where D is not null group by D order by sum(G) desc limit 10 label D 'CAT', sum(G) 'Value', sum(F) 'Qty'\",0)");
   d.setColumnWidth(1, 220); d.setColumnWidth(2, 140);
   return 'Dashboard built.';
 }
 
 // ---- Email body for daily close-out ---------------------------------
-function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay) {
+function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, estTotalIncome) {
   var lines = [
     'Cross Creek Pak N Ship — End-of-Day Close-Out', '',
     'Date: ' + data.date, 'Closed by: ' + data.closedBy, '',
@@ -348,6 +368,10 @@ function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailR
     'Prepaid packages: ' + data.prepaid, 'Voided packages: ' + data.voided, '',
     'Commissionable mail (weigh-in + special): $' + n_(mailRevenue).toFixed(2),
     'Estimated CPU pay (19.5% mail + $' + CONFIG.PREPAID_RATE + '/prepaid): $' + n_(estPay).toFixed(2),
+    'Passport renewals: ' + (data.passportCount || 0) + ' (x$' + CONFIG.PASSPORT_FEE + ')',
+    'Notaries: ' + (data.notaryCount || 0) + ' (x$' + CONFIG.NOTARY_FEE + ')',
+    'Service income: $' + n_(serviceIncome).toFixed(2),
+    'ESTIMATED TOTAL INCOME: $' + n_(estTotalIncome).toFixed(2),
     '',
     'Report photo: ' + (photoUrl || '(none)'),
     'Notes: ' + (data.notes || '(none)'), '', 'Employees:'

@@ -42,6 +42,10 @@ Workflow:
 
 ## 3. Helping with the application
 
+> **Passport renewal support fee: $35.** Record each renewal on the end-of-day
+> close-out (Passport renewals #) so it's tracked in daily income. Passport
+> photos are priced separately `[CONFIRM: photo price]`.
+
 1. Identify which form they need:
    - **DS‑11** — first‑time, minors, lost/stolen, or expired long ago / when
      you were under 16. Submitted **in person**.

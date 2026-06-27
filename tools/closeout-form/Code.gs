@@ -279,7 +279,7 @@ function submitCloseout(data) {
 
   // Emails
   if (CONFIG.SEND_EMAIL && CONFIG.EMAIL_TO) {
-    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, suppliesIncome, estTotalIncome);
+    sendSummaryEmail(data, estTotalIncome);
   }
   if (n_(data.postageLeft) < CONFIG.POSTAGE_ALERT_THRESHOLD && CONFIG.EMAIL_TO) {
     MailApp.sendEmail(CONFIG.EMAIL_TO,
@@ -414,47 +414,19 @@ function buildDashboard() {
   return 'Dashboard built.';
 }
 
-// ---- Email body for daily close-out ---------------------------------
-function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, suppliesIncome, estTotalIncome) {
-  var lines = [
-    'Cross Creek Pak N Ship — End-of-Day Close-Out', '',
-    'Date: ' + data.date, 'Closed by: ' + data.closedBy, '',
-    'Starting bank: $' + n_(data.startingBank).toFixed(2),
-    'Cash collected: $' + n_(data.cash).toFixed(2),
-    'Credit card payments: ' + data.ccCount + ' (total $' + n_(data.ccTotal).toFixed(2) + ')',
-    'Total sales: $' + n_(totalSales).toFixed(2),
-    'Petty cash out: $' + n_(data.pettyCash).toFixed(2),
-    'Drawer counted: $' + n_(data.drawerCounted).toFixed(2),
-    'Expected drawer: $' + n_(expected).toFixed(2),
-    'Over/Short: $' + n_(overShort).toFixed(2) +
-      (Math.abs(overShort) > CONFIG.OVER_SHORT_TOLERANCE ? '  <-- CHECK' : ''),
-    '',
-    'Stamps/postage used: $' + n_(data.stamps).toFixed(2),
-    'Postage left in CRM: $' + n_(data.postageLeft).toFixed(2),
-    'Prepaid packages: ' + data.prepaid, 'Voided packages: ' + data.voided, '',
-    'Commissionable mail (weigh-in + special): $' + n_(mailRevenue).toFixed(2),
-    'Estimated CPU pay (19.5% mail + $' + CONFIG.PREPAID_RATE + '/prepaid): $' + n_(estPay).toFixed(2),
-    'Passport renewals: ' + (data.passportCount || 0) + ' (x$' + CONFIG.PASSPORT_FEE + ')',
-    'Notaries: ' + (data.notaryCount || 0) + ' (x$' + CONFIG.NOTARY_FEE + ')',
-    'Fax pages: ' + (data.faxPages || 0) + ' (x$' + CONFIG.FAX_FEE + ')',
-    'Copies 1-3 pp: ' + (data.copySmall || 0) + ' (x$' + CONFIG.COPY_SMALL_FEE + ')   ' +
-      'Copies 4-10 pp: ' + (data.copyLarge || 0) + ' (x$' + CONFIG.COPY_LARGE_FEE + ')',
-    'Service income: $' + n_(serviceIncome).toFixed(2),
-    'Supplies income: $' + n_(suppliesIncome).toFixed(2),
-    'ESTIMATED TOTAL INCOME: $' + n_(estTotalIncome).toFixed(2),
-    '',
-    'Report photo: ' + (photoUrl || '(none)'),
-    'Notes: ' + (data.notes || '(none)'), '', 'Employees:'
-  ];
-  (data.employees || []).forEach(function (e) {
-    lines.push('  • ' + e.name + ' | in ' + (e.clockIn || '-') + ' out ' + (e.clockOut || '-') +
-      ' | customers ' + e.customers + ' | notary ' + e.notary + ' | passport ' + e.passport);
-  });
-  if (!(data.employees || []).length) lines.push('  (none entered)');
+// ---- Email body for daily close-out (owner snapshot — 4 numbers) ----
+function sendSummaryEmail(data, estTotalIncome) {
+  var bank = n_(data.startingBank);
+  var counted = n_(data.drawerCounted);
+  var overflow = counted - bank; // cash above the bank, i.e. the deposit to pull
   MailApp.sendEmail(CONFIG.EMAIL_TO,
-    'Close-Out ' + data.date + ' — ' + data.closedBy +
-      (Math.abs(overShort) > CONFIG.OVER_SHORT_TOLERANCE ? ' (OVER/SHORT)' : ''),
-    lines.join('\n'));
+    'Close-Out ' + data.date + ' — ' + data.closedBy,
+    ['Cross Creek Pak N Ship — ' + data.date + ' (' + data.closedBy + ')', '',
+      'Profit for the day: $' + n_(estTotalIncome).toFixed(2),
+      'Money left in register: $' + counted.toFixed(2),
+      'Cash overflow (above $' + bank.toFixed(2) + ' bank): $' + overflow.toFixed(2),
+      'Postage left in machine: $' + n_(data.postageLeft).toFixed(2)
+    ].join('\n'));
 }
 
 // ---- helpers --------------------------------------------------------

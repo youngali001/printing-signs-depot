@@ -29,7 +29,7 @@ var CONFIG = {
   SHEET_ID: 'PASTE_GOOGLE_SHEET_ID_HERE',
 
   // Drive folder where report photos get filed (ID from its URL).
-  FOLDER_ID: 'PASTE_DRIVE_FOLDER_ID_HERE',
+  FOLDER_ID: '1NAhDuRdNXuoSmqZ1kZefT8kj8NreVL3n',
 
   // Daily summary email. Set SEND_EMAIL false to turn off.
   SEND_EMAIL: true,

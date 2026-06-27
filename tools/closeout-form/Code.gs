@@ -59,7 +59,22 @@ var CONFIG = {
   NOTARY_FEE: 11,
   FAX_FEE: 1.5,        // per fax page
   COPY_SMALL_FEE: 1,   // copy job of 1-3 pages
-  COPY_LARGE_FEE: 3    // copy job of 4-10 pages
+  COPY_LARGE_FEE: 3,   // copy job of 4-10 pages
+
+  // Packing supplies sold (retail). Add/edit items here — the form and the
+  // math pick them up automatically. Prices stay server-side (off the form).
+  SUPPLIES: [
+    { key: 'mailer_6x10',     label: '6x10 poly bubble mailer',   price: 2.00 },
+    { key: 'env_9x12',        label: '9x12 white envelope',       price: 2.00 },
+    { key: 'mailer_10_5x16',  label: '10.5x16 bubble mailer',     price: 3.00 },
+    { key: 'mailer_12x15_5',  label: '12x15.5 poly mailer',       price: 2.00 },
+    { key: 'mailer_14_25x20', label: '14.25x20 bubble mailer',    price: 4.00 },
+    { key: 'box_4x4x4',       label: '4x4x4 brown box',           price: 1.50 },
+    { key: 'box_6x6x6',       label: '6x6x6 brown box',           price: 2.00 },
+    { key: 'box_4x10x8',      label: '4x10x8 brown box',          price: 4.00 },
+    { key: 'box_18x14x12',    label: '18x14x12 brown box',        price: 6.50 },
+    { key: 'box_24x18x18',    label: '24x18x18 brown box',        price: 9.50 }
+  ]
 };
 // ===================================================================
 
@@ -70,6 +85,11 @@ function doGet(e) {
   return HtmlService.createHtmlOutputFromFile(file)
     .setTitle('Cross Creek Pak N Ship')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0');
+}
+
+// ---- Supplies list for the form (labels only — prices stay server-side) ----
+function getSupplies() {
+  return CONFIG.SUPPLIES.map(function (s) { return { key: s.key, label: s.label }; });
 }
 
 // ---- Access ---------------------------------------------------------
@@ -176,7 +196,13 @@ function submitCloseout(data) {
   var copyLarge = n_(data.copyLarge);
   var serviceIncome = passportCount * CONFIG.PASSPORT_FEE + notaryCount * CONFIG.NOTARY_FEE +
     faxPages * CONFIG.FAX_FEE + copySmall * CONFIG.COPY_SMALL_FEE + copyLarge * CONFIG.COPY_LARGE_FEE;
-  var estTotalIncome = estPay + serviceIncome;
+
+  // Packing supplies sold
+  var supplies = data.supplies || {};
+  var suppliesIncome = 0;
+  CONFIG.SUPPLIES.forEach(function (s) { suppliesIncome += n_(supplies[s.key]) * s.price; });
+
+  var estTotalIncome = estPay + serviceIncome + suppliesIncome;
 
   // Save the photo to Drive
   var photoUrl = '';
@@ -202,7 +228,7 @@ function submitCloseout(data) {
     '# Employees', 'Report photo', 'Notes',
     'Commissionable mail ($)', 'Est. CPU pay ($)',
     'Passport renewals (#)', 'Notaries (#)', 'Service income ($)', 'Est. total income ($)',
-    'Fax pages (#)', 'Copies 1-3 (#)', 'Copies 4-10 (#)'
+    'Fax pages (#)', 'Copies 1-3 (#)', 'Copies 4-10 (#)', 'Supplies income ($)'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, startingBank, cash, data.ccCount,
@@ -211,8 +237,20 @@ function submitCloseout(data) {
     emps.length, photoUrl, data.notes || '',
     mailRevenue, estPay,
     passportCount, notaryCount, serviceIncome, estTotalIncome,
-    faxPages, copySmall, copyLarge
+    faxPages, copySmall, copyLarge, suppliesIncome
   ]);
+
+  // Supplies sold — one row per item (qty > 0) in "Supplies"
+  var anySupplies = CONFIG.SUPPLIES.some(function (s) { return n_(supplies[s.key]) > 0; });
+  if (anySupplies) {
+    var supSheet = getOrCreateSheet(ss, 'Supplies', [
+      'Timestamp', 'Date', 'Item', 'Qty', 'Unit price ($)', 'Line total ($)']);
+    var supTime = new Date();
+    CONFIG.SUPPLIES.forEach(function (s) {
+      var q = n_(supplies[s.key]);
+      if (q > 0) supSheet.appendRow([supTime, data.date, s.label, q, s.price, q * s.price]);
+    });
+  }
 
   // Per-employee rows
   if (emps.length) {
@@ -242,7 +280,7 @@ function submitCloseout(data) {
 
   // Emails
   if (CONFIG.SEND_EMAIL && CONFIG.EMAIL_TO) {
-    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, estTotalIncome);
+    sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, suppliesIncome, estTotalIncome);
   }
   if (n_(data.postageLeft) < CONFIG.POSTAGE_ALERT_THRESHOLD && CONFIG.EMAIL_TO) {
     MailApp.sendEmail(CONFIG.EMAIL_TO,
@@ -293,7 +331,7 @@ function periodSummary_(days, label) {
   var rows = sh.getDataRange().getValues();
   var cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
   var t = { sales: 0, cash: 0, card: 0, stamps: 0, prepaid: 0, voided: 0, os: 0,
-    pay: 0, passport: 0, notary: 0, svc: 0, income: 0, n: 0 };
+    pay: 0, passport: 0, notary: 0, svc: 0, supplies: 0, income: 0, n: 0 };
   for (var i = 1; i < rows.length; i++) {
     var d = new Date(rows[i][1]);
     if (d >= cutoff) {
@@ -301,7 +339,7 @@ function periodSummary_(days, label) {
       t.stamps += n_(rows[i][12]); t.prepaid += n_(rows[i][14]); t.voided += n_(rows[i][15]);
       t.os += n_(rows[i][11]); t.pay += n_(rows[i][20]);
       t.passport += n_(rows[i][21]); t.notary += n_(rows[i][22]);
-      t.svc += n_(rows[i][23]); t.income += n_(rows[i][24]); t.n++;
+      t.svc += n_(rows[i][23]); t.income += n_(rows[i][24]); t.supplies += n_(rows[i][28]); t.n++;
     }
   }
   MailApp.sendEmail(CONFIG.EMAIL_TO, label + ' summary — ' + t.n + ' days',
@@ -314,6 +352,7 @@ function periodSummary_(days, label) {
       'Estimated CPU pay: $' + t.pay.toFixed(2),
       'Passport renewals: ' + t.passport + '   Notaries: ' + t.notary,
       'Service income: $' + t.svc.toFixed(2),
+      'Supplies income: $' + t.supplies.toFixed(2),
       'ESTIMATED TOTAL INCOME: $' + t.income.toFixed(2)].join('\n'));
 }
 
@@ -337,7 +376,8 @@ function buildDashboard() {
     ['Commissionable mail', monthSum('T')], ['Est. CPU pay', monthSum('U')],
     ['Passport renewals', monthSum('V')], ['Notaries', monthSum('W')],
     ['Fax pages', monthSum('Z')], ['Copies 1-3', monthSum('AA')], ['Copies 4-10', monthSum('AB')],
-    ['Service income', monthSum('X')], ['Est. TOTAL income', monthSum('Y')]
+    ['Service income', monthSum('X')], ['Supplies income', monthSum('AC')],
+    ['Est. TOTAL income', monthSum('Y')]
   ];
   d.getRange('A4').setValue('Metric').setFontWeight('bold');
   d.getRange('B4').setValue('This month').setFontWeight('bold');
@@ -345,21 +385,29 @@ function buildDashboard() {
     d.getRange(5 + i, 1).setValue(kpis[i][0]);
     d.getRange(5 + i, 2).setFormula(kpis[i][1]);
   }
-  d.getRange('A23').setValue('Per-employee upsell (all-time)').setFontWeight('bold');
-  d.getRange('A24').setFormula(
+  var r = 5 + kpis.length + 2; // running row, with a gap after the KPI block
+
+  d.getRange(r, 1).setValue('Per-employee upsell (all-time)').setFontWeight('bold');
+  d.getRange(r + 1, 1).setFormula(
     "=QUERY(Employees!A2:I,\"select C, sum(F), sum(G), sum(H) where C is not null group by C label C 'Employee', sum(F) 'Customers', sum(G) 'Told notary', sum(H) 'Told passport'\",0)");
-  d.getRange('A39').setValue('Category mix by section (all-time)').setFontWeight('bold');
-  d.getRange('A40').setFormula(
+  r += 15;
+  d.getRange(r, 1).setValue('Category mix by section (all-time)').setFontWeight('bold');
+  d.getRange(r + 1, 1).setFormula(
     "=QUERY('Report Lines'!A2:G,\"select C, sum(F), sum(G) where C is not null group by C label C 'Section', sum(F) 'Qty', sum(G) 'Value'\",0)");
-  d.getRange('A55').setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
-  d.getRange('A56').setFormula(
+  r += 15;
+  d.getRange(r, 1).setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
+  d.getRange(r + 1, 1).setFormula(
     "=QUERY('Report Lines'!A2:G,\"select D, sum(G), sum(F) where D is not null group by D order by sum(G) desc limit 10 label D 'CAT', sum(G) 'Value', sum(F) 'Qty'\",0)");
-  d.setColumnWidth(1, 220); d.setColumnWidth(2, 140);
+  r += 14;
+  d.getRange(r, 1).setValue('Supplies sold (all-time)').setFontWeight('bold');
+  d.getRange(r + 1, 1).setFormula(
+    "=QUERY(Supplies!A2:F,\"select C, sum(D), sum(F) where C is not null group by C order by sum(F) desc label C 'Item', sum(D) 'Qty', sum(F) 'Revenue'\",0)");
+  d.setColumnWidth(1, 240); d.setColumnWidth(2, 140);
   return 'Dashboard built.';
 }
 
 // ---- Email body for daily close-out ---------------------------------
-function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, estTotalIncome) {
+function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailRevenue, estPay, serviceIncome, suppliesIncome, estTotalIncome) {
   var lines = [
     'Cross Creek Pak N Ship — End-of-Day Close-Out', '',
     'Date: ' + data.date, 'Closed by: ' + data.closedBy, '',
@@ -384,6 +432,7 @@ function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailR
     'Copies 1-3 pp: ' + (data.copySmall || 0) + ' (x$' + CONFIG.COPY_SMALL_FEE + ')   ' +
       'Copies 4-10 pp: ' + (data.copyLarge || 0) + ' (x$' + CONFIG.COPY_LARGE_FEE + ')',
     'Service income: $' + n_(serviceIncome).toFixed(2),
+    'Supplies income: $' + n_(suppliesIncome).toFixed(2),
     'ESTIMATED TOTAL INCOME: $' + n_(estTotalIncome).toFixed(2),
     '',
     'Report photo: ' + (photoUrl || '(none)'),

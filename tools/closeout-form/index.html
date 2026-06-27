@@ -142,6 +142,13 @@
         </div>
       </fieldset>
 
+      <!-- 3c. SUPPLIES -->
+      <fieldset>
+        <legend>Packing supplies sold</legend>
+        <div class="hint">Enter how many of each you sold today.</div>
+        <div id="supplies" class="row" style="align-items:flex-end"></div>
+      </fieldset>
+
       <!-- 4. EMPLOYEES -->
       <fieldset>
         <legend>4 · Employees</legend>
@@ -207,6 +214,32 @@
     }
     recalc();
     checkDup();
+    loadSupplies();
+  }
+
+  // ---------- packing supplies (list comes from the server) ----------
+  var SUPPLIES = [], draftSupplies = null;
+  function loadSupplies(){
+    if(!hasGS){ $('supplies').innerHTML = '<div class="hint">Supplies load once deployed via Apps Script.</div>'; return; }
+    google.script.run.withSuccessHandler(renderSupplies).withFailureHandler(function(){}).getSupplies();
+  }
+  function renderSupplies(list){
+    SUPPLIES = list || [];
+    var w = $('supplies'); w.innerHTML = '';
+    SUPPLIES.forEach(function(s){
+      var div = document.createElement('div');
+      div.innerHTML = '<label for="sup_'+s.key+'">'+s.label+'</label>'+
+        '<input type="number" min="0" step="1" id="sup_'+s.key+'" placeholder="0">';
+      w.appendChild(div);
+      var inp = div.querySelector('input');
+      if(draftSupplies && draftSupplies[s.key]) inp.value = draftSupplies[s.key];
+      inp.addEventListener('input', saveDraft);
+    });
+  }
+  function gatherSupplies(){
+    var o = {};
+    SUPPLIES.forEach(function(s){ var el = $('sup_'+s.key); var v = el ? (parseInt(el.value)||0) : 0; if(v) o[s.key] = v; });
+    return o;
   }
 
   // ---------- live money math ----------
@@ -325,12 +358,14 @@
     try{
       var o={}; DRAFT_FIELDS.forEach(function(id){ o[id]=$(id).value; });
       o.employees = readEmployees();
+      o.supplies = gatherSupplies();
       localStorage.setItem(DRAFT, JSON.stringify(o));
     }catch(e){}
   }
   function restoreDraft(){
     try{
       var o=JSON.parse(localStorage.getItem(DRAFT)||'null'); if(!o) return;
+      draftSupplies = o.supplies || null; // applied when supplies render
       DRAFT_FIELDS.forEach(function(id){ if(o[id]!=null && o[id]!=='') $(id).value=o[id]; });
       (o.employees||[]).forEach(function(e){
         addEmployee(); var d=empWrap.lastElementChild;
@@ -354,6 +389,7 @@
       mailRevenue:num('mailRevenue'),
       passportCount:parseInt($('passportCount').value)||0, notaryCount:parseInt($('notaryCount').value)||0,
       faxPages:parseInt($('faxPages').value)||0, copySmall:parseInt($('copySmall').value)||0, copyLarge:parseInt($('copyLarge').value)||0,
+      supplies:gatherSupplies(),
       employees:readEmployees(), notes:$('notes').value.trim(),
       reportData:reportData, photoData:photoData, photoName:photoName, photoType:photoType };
   }
@@ -384,6 +420,7 @@
       ['Prepaid / Voided',pending.prepaid+' / '+pending.voided],
       ['Passport / Notary',pending.passportCount+' / '+pending.notaryCount],
       ['Fax pp / Copies',pending.faxPages+' / '+(pending.copySmall+pending.copyLarge)],
+      ['Supplies units',Object.keys(pending.supplies||{}).reduce(function(a,k){return a+pending.supplies[k];},0)],
       ['Employees',pending.employees.length]];
     $('reviewBody').innerHTML = rows.map(function(r){ return '<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>'; }).join('');
     $('reviewGate').classList.remove('hide');

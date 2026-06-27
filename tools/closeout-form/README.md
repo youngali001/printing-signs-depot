@@ -35,6 +35,8 @@ The commissionable mail figure auto-fills from the report photo (verify it).
 - **Notaries × $11**
 - **Fax × $1.50/page**
 - **Copies: $1 (1–3 pages) / $3 (4–10 pages)**
+- **Packing supplies** (mailers, envelopes, boxes) — list/prices in
+  `CONFIG.SUPPLIES`; staff enter counts, detail lands in the **Supplies** tab
 
 > **Profit is owner-only.** Staff never see any pay/commission/income figures on
 > the form — they only enter raw inputs (mail revenue, passport #, notary #,
@@ -57,8 +59,8 @@ sanity-check warnings**, and a **duplicate-day warning**.
 > report photo — those always come from the register/CRM and stay manual.
 
 ## Sheet tabs created automatically
-`Closeouts` · `Employees` · `Report Lines` · `Openings` · `Appointments`
-(plus `Dashboard` when you run `buildDashboard`).
+`Closeouts` · `Employees` · `Report Lines` · `Openings` · `Appointments` ·
+`Supplies` (plus `Dashboard` when you run `buildDashboard`).
 
 ## Files
 | File | Paste into Apps Script as |
@@ -95,6 +97,8 @@ sanity-check warnings**, and a **duplicate-day warning**.
    - `COMMISSION_RATE` (0.195) / `PREPAID_RATE` (0.25) → CPU pay rates
    - `PASSPORT_FEE` (35) / `NOTARY_FEE` (11) → in-house service fees
    - `FAX_FEE` (1.5) / `COPY_SMALL_FEE` (1) / `COPY_LARGE_FEE` (3) → fax & copies
+   - `SUPPLIES` → list of packing supplies sold (label + price); add items here
+     and the form + math update automatically
 4. Add the three HTML files: **+** next to *Files* → **HTML** → name it exactly
    `index`, then again for `opening`, then `appointments` — pasting each
    file's contents.

@@ -58,8 +58,21 @@ Pack so the item survives a 3‑foot drop. General rules:
 6. Remove or cover all old labels and barcodes.
 7. For documents/photos, use a rigid mailer.
 
-**Packing materials are charged** per the price list `[CONFIRM]`. If we pack it,
-we stand behind the packing for insurance purposes — so pack it right.
+**Packing materials are charged** per the price list below. If we pack it, we
+stand behind the packing for insurance purposes — so pack it right.
+
+### Packing supply price list
+
+| Mailers & envelopes | Price | | Brown boxes | Price |
+|---|---|---|---|---|
+| 6x10 poly bubble mailer | $2.00 | | 4x4x4 | $1.50 |
+| 9x12 white envelope | $2.00 | | 6x6x6 | $2.00 |
+| 10.5x16 bubble mailer | $3.00 | | 4x10x8 | $4.00 |
+| 12x15.5 poly mailer | $2.00 | | 18x14x12 | $6.50 |
+| 14.25x20 bubble mailer | $4.00 | | 24x18x18 | $9.50 |
+
+Record supplies sold on the end-of-day close-out so they're tracked in daily
+income.
 
 ## 4. Insurance / declared value
 

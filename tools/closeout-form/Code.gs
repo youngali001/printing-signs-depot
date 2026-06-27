@@ -319,6 +319,15 @@ function logAppointment(data) {
   return 'Appointment saved for ' + data.customer + '.';
 }
 
+// ---- Email test (run from the editor to verify mail + grant permission) ----
+function testEmail() {
+  MailApp.sendEmail(CONFIG.EMAIL_TO,
+    'Cross Creek close-out — email test',
+    'If you received this, email sending works.\n' +
+    'Remaining daily email quota: ' + MailApp.getRemainingDailyQuota());
+  return 'Sent test to ' + CONFIG.EMAIL_TO;
+}
+
 // ---- Scheduled summaries (add time-driven triggers) -----------------
 function sendWeeklySummary() { periodSummary_(7, 'Weekly'); }
 function sendMonthlySummary() { periodSummary_(31, 'Monthly'); }

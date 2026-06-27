@@ -3,6 +3,10 @@
 Covers self‑/full‑service copies and prints, faxing, and scanning. These are
 fast, frequent jobs — accuracy and a clear price are what matter.
 
+> **Price list:** Fax **$1.50 per page**. Copies **$1 for 1–3 pages**, **$3 for
+> 4–10 pages** `[CONFIRM: price for 11+ pages]`. Record fax pages and copy jobs
+> on the end-of-day close-out so they're tracked in daily income.
+
 ## 1. Copies & printing
 
 1. Confirm the job: **size** (Letter/Legal/Tabloid), **color or B&W**,

@@ -20,7 +20,8 @@ TAB "Closeouts" — one row per day:
   Expected drawer ($), Over/Short ($), Stamps used ($), Postage left in CRM ($),
   Prepaid pkgs, Voided pkgs, # Employees, Report photo, Notes,
   Commissionable mail ($), Est. CPU pay ($), Passport renewals (#),
-  Notaries (#), Service income ($), Est. total income ($)
+  Notaries (#), Service income ($), Est. total income ($),
+  Fax pages (#), Copies 1-3 (#), Copies 4-10 (#)
 
 TAB "Employees" — one row per employee per day:
 - Timestamp, Date, Employee, Clock in, Clock out, Customers helped,
@@ -39,7 +40,8 @@ TAB "Appointments" — one row per booking:
 
 How profit/income works (already calculated in Closeouts, do not recompute):
 - Est. CPU pay = 19.5% of Commissionable mail + $0.25 per prepaid piece.
-- Service income = Passport renewals x $35 + Notaries x $11.
+- Service income = Passport renewals x $35 + Notaries x $11
+  + Fax pages x $1.50 + Copies 1-3 x $1 + Copies 4-10 x $3.
 - Est. total income = Est. CPU pay + Service income.
 
 Create a new tab called "Dashboard" with these sections, using LIVE formulas
@@ -50,7 +52,8 @@ Create a new tab called "Dashboard" with these sections, using LIVE formulas
    Est. CPU pay, Service income, Est. total income.
 
 2. INCOME — CURRENT MONTH: totals for Commissionable mail, Est. CPU pay,
-   Passport renewals (#), Notaries (#), Service income, and Est. total income.
+   Passport renewals (#), Notaries (#), Fax pages (#), Copies 1-3 (#),
+   Copies 4-10 (#), Service income, and Est. total income.
    Also show Est. total income per day for the month as a list/mini-table.
 
 3. OPERATIONS — CURRENT MONTH: total sales, cash, card, stamps/postage used,

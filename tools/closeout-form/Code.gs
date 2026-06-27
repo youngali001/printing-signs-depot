@@ -56,7 +56,10 @@ var CONFIG = {
 
   // In-house service fees (100% store revenue, not USPS).
   PASSPORT_FEE: 35,
-  NOTARY_FEE: 11
+  NOTARY_FEE: 11,
+  FAX_FEE: 1.5,        // per fax page
+  COPY_SMALL_FEE: 1,   // copy job of 1-3 pages
+  COPY_LARGE_FEE: 3    // copy job of 4-10 pages
 };
 // ===================================================================
 
@@ -168,7 +171,11 @@ function submitCloseout(data) {
   // In-house service income
   var passportCount = n_(data.passportCount);
   var notaryCount = n_(data.notaryCount);
-  var serviceIncome = passportCount * CONFIG.PASSPORT_FEE + notaryCount * CONFIG.NOTARY_FEE;
+  var faxPages = n_(data.faxPages);
+  var copySmall = n_(data.copySmall);
+  var copyLarge = n_(data.copyLarge);
+  var serviceIncome = passportCount * CONFIG.PASSPORT_FEE + notaryCount * CONFIG.NOTARY_FEE +
+    faxPages * CONFIG.FAX_FEE + copySmall * CONFIG.COPY_SMALL_FEE + copyLarge * CONFIG.COPY_LARGE_FEE;
   var estTotalIncome = estPay + serviceIncome;
 
   // Save the photo to Drive
@@ -194,7 +201,8 @@ function submitCloseout(data) {
     'Stamps used ($)', 'Postage left in CRM ($)', 'Prepaid pkgs', 'Voided pkgs',
     '# Employees', 'Report photo', 'Notes',
     'Commissionable mail ($)', 'Est. CPU pay ($)',
-    'Passport renewals (#)', 'Notaries (#)', 'Service income ($)', 'Est. total income ($)'
+    'Passport renewals (#)', 'Notaries (#)', 'Service income ($)', 'Est. total income ($)',
+    'Fax pages (#)', 'Copies 1-3 (#)', 'Copies 4-10 (#)'
   ]);
   sheet.appendRow([
     new Date(), data.date, data.closedBy, startingBank, cash, data.ccCount,
@@ -202,7 +210,8 @@ function submitCloseout(data) {
     n_(data.stamps), n_(data.postageLeft), data.prepaid, data.voided,
     emps.length, photoUrl, data.notes || '',
     mailRevenue, estPay,
-    passportCount, notaryCount, serviceIncome, estTotalIncome
+    passportCount, notaryCount, serviceIncome, estTotalIncome,
+    faxPages, copySmall, copyLarge
   ]);
 
   // Per-employee rows
@@ -327,6 +336,7 @@ function buildDashboard() {
     ['Voided packages', monthSum('P')], ['Net over/short', monthSum('L')],
     ['Commissionable mail', monthSum('T')], ['Est. CPU pay', monthSum('U')],
     ['Passport renewals', monthSum('V')], ['Notaries', monthSum('W')],
+    ['Fax pages', monthSum('Z')], ['Copies 1-3', monthSum('AA')], ['Copies 4-10', monthSum('AB')],
     ['Service income', monthSum('X')], ['Est. TOTAL income', monthSum('Y')]
   ];
   d.getRange('A4').setValue('Metric').setFontWeight('bold');
@@ -335,14 +345,14 @@ function buildDashboard() {
     d.getRange(5 + i, 1).setValue(kpis[i][0]);
     d.getRange(5 + i, 2).setFormula(kpis[i][1]);
   }
-  d.getRange('A20').setValue('Per-employee upsell (all-time)').setFontWeight('bold');
-  d.getRange('A21').setFormula(
+  d.getRange('A23').setValue('Per-employee upsell (all-time)').setFontWeight('bold');
+  d.getRange('A24').setFormula(
     "=QUERY(Employees!A2:I,\"select C, sum(F), sum(G), sum(H) where C is not null group by C label C 'Employee', sum(F) 'Customers', sum(G) 'Told notary', sum(H) 'Told passport'\",0)");
-  d.getRange('A36').setValue('Category mix by section (all-time)').setFontWeight('bold');
-  d.getRange('A37').setFormula(
+  d.getRange('A39').setValue('Category mix by section (all-time)').setFontWeight('bold');
+  d.getRange('A40').setFormula(
     "=QUERY('Report Lines'!A2:G,\"select C, sum(F), sum(G) where C is not null group by C label C 'Section', sum(F) 'Qty', sum(G) 'Value'\",0)");
-  d.getRange('A51').setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
-  d.getRange('A52').setFormula(
+  d.getRange('A55').setValue('Top 10 category codes by value (all-time)').setFontWeight('bold');
+  d.getRange('A56').setFormula(
     "=QUERY('Report Lines'!A2:G,\"select D, sum(G), sum(F) where D is not null group by D order by sum(G) desc limit 10 label D 'CAT', sum(G) 'Value', sum(F) 'Qty'\",0)");
   d.setColumnWidth(1, 220); d.setColumnWidth(2, 140);
   return 'Dashboard built.';
@@ -370,6 +380,9 @@ function sendSummaryEmail(data, photoUrl, expected, overShort, totalSales, mailR
     'Estimated CPU pay (19.5% mail + $' + CONFIG.PREPAID_RATE + '/prepaid): $' + n_(estPay).toFixed(2),
     'Passport renewals: ' + (data.passportCount || 0) + ' (x$' + CONFIG.PASSPORT_FEE + ')',
     'Notaries: ' + (data.notaryCount || 0) + ' (x$' + CONFIG.NOTARY_FEE + ')',
+    'Fax pages: ' + (data.faxPages || 0) + ' (x$' + CONFIG.FAX_FEE + ')',
+    'Copies 1-3 pp: ' + (data.copySmall || 0) + ' (x$' + CONFIG.COPY_SMALL_FEE + ')   ' +
+      'Copies 4-10 pp: ' + (data.copyLarge || 0) + ' (x$' + CONFIG.COPY_LARGE_FEE + ')',
     'Service income: $' + n_(serviceIncome).toFixed(2),
     'ESTIMATED TOTAL INCOME: $' + n_(estTotalIncome).toFixed(2),
     '',

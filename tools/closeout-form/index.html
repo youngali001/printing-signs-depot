@@ -113,18 +113,24 @@
           <div><label class="req" for="voided">Voided packages (#)</label><input type="number" step="1" min="0" id="voided" placeholder="0" required></div>
         </div>
 
-        <label class="req" for="photo">Photo of category-code report</label>
-        <input type="file" id="photo" accept="image/*" capture="environment" required>
+        <label for="photo">Photo of category-code report</label>
+        <input type="file" id="photo" accept="image/*" capture="environment">
         <div class="photo-note">Lay it flat for the clearest read. Postage used + Prepaid auto-fill — <b>verify them</b>.</div>
         <button type="button" class="ghost" id="retake">Retake / change category-code photo</button>
         <img id="preview" class="preview" alt="category report preview">
         <div id="reportStatus" style="display:none;margin-top:8px;padding:9px 11px;border-radius:8px;font-size:.85rem"></div>
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:#fff;font-size:.9rem">
+          <input type="checkbox" id="noPhoto" style="width:auto"> I don’t have the category-code report
+        </label>
 
-        <label class="req" for="finPhoto" style="margin-top:14px">Photo of financial summary report</label>
-        <input type="file" id="finPhoto" accept="image/*" capture="environment" required>
+        <label for="finPhoto" style="margin-top:16px">Photo of financial summary report</label>
+        <input type="file" id="finPhoto" accept="image/*" capture="environment">
         <div class="photo-note">Take a clear photo of the financial summary report.</div>
         <button type="button" class="ghost" id="finRetake">Retake / change financial-summary photo</button>
         <img id="finPreview" class="preview" alt="financial summary preview">
+        <label style="display:flex;align-items:center;gap:8px;margin-top:8px;color:#fff;font-size:.9rem">
+          <input type="checkbox" id="noFin" style="width:auto"> I don’t have the financial summary report
+        </label>
       </fieldset>
 
       <!-- 3b. MAIL & SERVICES (data entry only) -->
@@ -300,10 +306,14 @@
   $('retake').addEventListener('click', function(){ $('photo').value=''; photoData=null; $('preview').style.display='none'; $('photo').click(); });
   $('photo').addEventListener('change', function(){
     var f=$('photo').files[0]; if(!f) return;
+    $('noPhoto').checked=false; // uploading clears the "no receipt" box
     photoName=(f.name||'report').replace(/\.[^.]+$/,'')+'.jpg';
     handlePhoto(f, function(dataUrl, b64){
       photoData=b64; $('preview').src=dataUrl; $('preview').style.display='block'; readReport();
     });
+  });
+  $('noPhoto').addEventListener('change', function(){
+    if(this.checked){ $('photo').value=''; photoData=null; $('preview').style.display='none'; $('reportStatus').style.display='none'; }
   });
   function setRpt(text,kind){
     var c={work:['rgba(245,197,24,.15)','#F5C518'],ok:['rgba(46,204,113,.15)','#2ecc71'],err:['rgba(212,40,110,.15)','#D4286E']}[kind]||['rgba(255,255,255,.08)','#888'];
@@ -341,10 +351,14 @@
   $('finRetake').addEventListener('click', function(){ $('finPhoto').value=''; finData=null; $('finPreview').style.display='none'; $('finPhoto').click(); });
   $('finPhoto').addEventListener('change', function(){
     var f=$('finPhoto').files[0]; if(!f) return;
+    $('noFin').checked=false;
     finName=(f.name||'financial').replace(/\.[^.]+$/,'')+'.jpg';
     handlePhoto(f, function(dataUrl, b64){
       finData=b64; $('finPreview').src=dataUrl; $('finPreview').style.display='block';
     });
+  });
+  $('noFin').addEventListener('change', function(){
+    if(this.checked){ $('finPhoto').value=''; finData=null; $('finPreview').style.display='none'; }
   });
 
   // ---------- draft autosave (no photos) ----------
@@ -382,8 +396,8 @@
       faxPages:parseInt($('faxPages').value)||0, copySmall:parseInt($('copySmall').value)||0, copyLarge:parseInt($('copyLarge').value)||0,
       supplies:gatherSupplies(), employees:readEmployees(), notes:$('notes').value.trim(),
       reportData:reportData,
-      photoData:photoData, photoName:photoName, photoType:photoType,
-      financialPhotoData:finData, financialPhotoName:finName, financialPhotoType:finType };
+      photoData:photoData, photoName:photoName, photoType:photoType, noPhoto:$('noPhoto').checked,
+      financialPhotoData:finData, financialPhotoName:finName, financialPhotoType:finType, noFinancial:$('noFin').checked };
   }
   function warnings(d){
     var w=[];
@@ -399,8 +413,8 @@
   var pending=null;
   $('form').addEventListener('submit', function(e){
     e.preventDefault();
-    if(!photoData){ showMsg('err','Please attach the category-code report photo.'); return; }
-    if(!finData){ showMsg('err','Please attach the financial summary report photo.'); return; }
+    if(!photoData && !$('noPhoto').checked){ showMsg('err','Add the category-code report photo, or check “I don’t have it”.'); return; }
+    if(!finData && !$('noFin').checked){ showMsg('err','Add the financial summary report photo, or check “I don’t have it”.'); return; }
     pending = gather();
     var w = warnings(pending);
     var wl=$('warnList'); wl.innerHTML=''; wl.classList.toggle('hide', !w.length);

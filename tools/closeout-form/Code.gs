@@ -210,9 +210,9 @@ function submitCloseout(data) {
   var folder = DriveApp.getFolderById(CONFIG.FOLDER_ID);
   var safeCloser = (data.closedBy || 'unknown').replace(/[^\w\-]+/g, '_');
   var photoUrl = savePhoto_(folder, data.photoData, data.photoName, data.photoType,
-    data.date + '_category-report_' + safeCloser);
+    data.date + '_category-report_' + safeCloser) || (data.noPhoto ? 'NO RECEIPT' : '');
   var financialUrl = savePhoto_(folder, data.financialPhotoData, data.financialPhotoName,
-    data.financialPhotoType, data.date + '_financial-summary_' + safeCloser);
+    data.financialPhotoType, data.date + '_financial-summary_' + safeCloser) || (data.noFinancial ? 'NO RECEIPT' : '');
 
   // Summary row
   var emps = data.employees || [];

@@ -56,9 +56,10 @@ Built-in safeguards: **PIN gate**, **draft auto-save** (survives a refresh /
 dropped connection), **photo compression + retake**, a **review screen with
 sanity-check warnings**, and a **duplicate-day warning**.
 
-Notes: the **starting bank defaults to $111**; the close-out takes **two
-photos** (category-code report + financial summary report); only **one
-employee** is logged per close-out.
+Notes: the **starting bank defaults to $111**; the close-out has **two photo
+slots** (category-code report + financial summary report) — each is optional but
+the closer must either upload it or tick **"I don't have it"** (the sheet logs
+`NO RECEIPT` in that case); only **one employee** is logged per close-out.
 
 ## Dashboard — use `buildDashboard`, not Gemini
 Run **`buildDashboard`** from the Apps Script editor to create/refresh the

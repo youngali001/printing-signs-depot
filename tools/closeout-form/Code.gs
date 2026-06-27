@@ -26,7 +26,7 @@
 // ======================= CONFIG — EDIT THESE =======================
 var CONFIG = {
   // Google Sheet that holds the data (ID from its URL).
-  SHEET_ID: 'PASTE_GOOGLE_SHEET_ID_HERE',
+  SHEET_ID: '1rs-8AqYaGLCJRAAsB7aqy4lDFumX0pj-o9pY-a1eZqc',
 
   // Drive folder where report photos get filed (ID from its URL).
   FOLDER_ID: '1NAhDuRdNXuoSmqZ1kZefT8kj8NreVL3n',

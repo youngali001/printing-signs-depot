@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross Creek Pak N Ship — Appointments</title>
+<style>
+  :root{--bg:#0D1520;--card:#142234;--line:rgba(255,255,255,.10);--blue:#2BAADC;--red:#D4286E;--ok:#2ecc71;--muted:rgba(255,255,255,.6)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.5;padding:16px;max-width:640px;margin:0 auto}
+  h1{font-size:1.3rem}.sub{color:var(--muted);font-size:.9rem;margin-bottom:10px}
+  nav{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  nav a{font-size:.82rem;padding:7px 12px;border:1px solid var(--line);border-radius:20px;color:var(--muted)}
+  nav a.on{background:var(--blue);color:#06121c;font-weight:700;border-color:var(--blue)}
+  fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:var(--card)}
+  legend{padding:0 8px;font-weight:700;color:var(--blue);font-size:.95rem}
+  label{display:block;font-size:.85rem;color:var(--muted);margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:11px 12px;border-radius:9px;border:1px solid var(--line);background:#0c1622;color:#fff;font-size:1rem;font-family:inherit}
+  .row{display:flex;gap:12px;flex-wrap:wrap}.row>div{flex:1;min-width:140px}
+  .req::after{content:" *";color:var(--red)}
+  .btn{width:100%;font-weight:800;font-size:1.05rem;padding:15px;border-radius:11px;cursor:pointer;background:var(--blue);color:#06121c}
+  .btn:disabled{opacity:.5}
+  #msg{margin-top:14px;padding:13px;border-radius:9px;display:none}
+  #msg.ok{display:block;background:rgba(46,204,113,.15);border:1px solid var(--ok)}
+  #msg.err{display:block;background:rgba(212,40,110,.15);border:1px solid var(--red)}
+  .overlay{position:fixed;inset:0;background:rgba(5,10,16,.93);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50}
+  .overlay .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;max-width:340px;width:100%;text-align:center}
+  .overlay input{text-align:center;font-size:1.4rem;letter-spacing:6px}
+  .hide{display:none!important}
+</style>
+</head>
+<body>
+  <div class="overlay" id="pinGate"><div class="box">
+    <h1 style="font-size:1.1rem">Staff PIN</h1><div class="sub">Enter the store PIN.</div>
+    <input type="password" id="pinInput" inputmode="numeric" placeholder="••••">
+    <button class="btn" id="pinBtn" style="margin-top:12px">Unlock</button>
+    <div id="pinErr" style="color:var(--red);font-size:.85rem;margin-top:8px;display:none">Wrong PIN.</div>
+  </div></div>
+
+  <div id="app" class="hide">
+    <h1>Notary / Passport Appointment</h1>
+    <div class="sub">Log a booking. Notary and passport renewal are by appointment (SOP 06 / 07).</div>
+    <nav><a href="<?= appUrl ?>">Close-out</a><a href="<?= appUrl ?>?page=open">Opening</a><a class="on" href="<?= appUrl ?>?page=appt">Appointments</a></nav>
+
+    <form id="form">
+      <fieldset>
+        <legend>Booking</legend>
+        <label class="req" for="service">Service</label>
+        <select id="service" required>
+          <option value="">Choose…</option>
+          <option>Notary</option>
+          <option>Passport renewal</option>
+          <option>Passport photo</option>
+          <option>Other</option>
+        </select>
+        <div class="row">
+          <div><label class="req" for="customer">Customer name</label><input type="text" id="customer" required></div>
+          <div><label for="phone">Phone</label><input type="tel" id="phone" placeholder="(813) ..."></div>
+        </div>
+        <div class="row">
+          <div><label class="req" for="apptDate">Appointment date</label><input type="date" id="apptDate" required></div>
+          <div><label class="req" for="apptTime">Time</label><input type="time" id="apptTime" required></div>
+        </div>
+        <label for="bookedBy">Booked by</label><input type="text" id="bookedBy" placeholder="Staff name">
+        <label for="notes">Notes</label><textarea id="notes" rows="2" placeholder="Documents needed, # of signers, etc."></textarea>
+      </fieldset>
+
+      <button type="submit" class="btn" id="submitBtn">Save appointment</button>
+      <div id="msg"></div>
+    </form>
+  </div>
+
+<script>
+  var hasGS=(typeof google!=='undefined'&&google.script&&google.script.run);
+  var $=function(id){return document.getElementById(id);};
+
+  function unlock(){ $('pinGate').classList.add('hide'); $('app').classList.remove('hide'); $('apptDate').valueAsDate=new Date(); }
+  $('pinBtn').addEventListener('click',function(){
+    if(!hasGS){ unlock(); return; }
+    google.script.run.withSuccessHandler(function(ok){ ok?unlock():($('pinErr').style.display='block'); })
+      .withFailureHandler(unlock).validatePin($('pinInput').value);
+  });
+  $('pinInput').addEventListener('keydown',function(e){ if(e.key==='Enter') $('pinBtn').click(); });
+
+  $('form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var payload={ service:$('service').value, customer:$('customer').value.trim(), phone:$('phone').value.trim(),
+      apptDate:$('apptDate').value, apptTime:$('apptTime').value, bookedBy:$('bookedBy').value.trim(), notes:$('notes').value.trim() };
+    var b=$('submitBtn'); b.disabled=true; b.textContent='Saving…';
+    if(!hasGS){ onErr({message:'Deploy via Apps Script to enable saving.'}); return; }
+    google.script.run.withSuccessHandler(onOk).withFailureHandler(onErr).logAppointment(payload);
+  });
+  function onOk(res){ var m=$('msg'); m.className='ok'; m.textContent='✅ '+(res||'Saved.'); $('form').reset(); $('apptDate').valueAsDate=new Date(); var b=$('submitBtn'); b.disabled=false; b.textContent='Save appointment'; }
+  function onErr(err){ var m=$('msg'); m.className='err'; m.textContent='⚠️ '+((err&&err.message)||'Save failed.'); var b=$('submitBtn'); b.disabled=false; b.textContent='Save appointment'; }
+</script>
+</body>
+</html>

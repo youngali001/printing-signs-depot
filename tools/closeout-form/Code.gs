@@ -54,6 +54,11 @@ var CONFIG = {
   COMMISSION_RATE: 0.195,
   PREPAID_RATE: 0.25,
 
+  // Breakeven tracking (shown on the Dashboard's "Goal vs. actual" panel).
+  MONTHLY_OPERATING_COST: 7109, // rent+lights+phone+payroll+materials+cc fee
+  LOAN_PAYMENT: 500,            // monthly loan payment used for breakeven
+  DAILY_GOAL: 600,              // daily income goal
+
   // In-house service fees (100% store revenue, not USPS).
   PASSPORT_FEE: 35,
   NOTARY_FEE: 11,
@@ -393,6 +398,17 @@ function buildDashboard() {
     d.getRange(5 + i, 1).setValue(kpis[i][0]);
     d.getRange(5 + i, 2).setFormula(kpis[i][1]);
   }
+
+  // Goal vs. actual panel (columns D/E, top)
+  var monthlyBE = CONFIG.MONTHLY_OPERATING_COST + CONFIG.LOAN_PAYMENT;
+  d.getRange('D4').setValue('Goal vs. actual (this month)').setFontWeight('bold');
+  d.getRange('D5').setValue('Income this month');   d.getRange('E5').setFormula(monthSum('Y'));
+  d.getRange('D6').setValue('Monthly breakeven');   d.getRange('E6').setValue(monthlyBE);
+  d.getRange('D7').setValue('Profit / (loss)');     d.getRange('E7').setFormula('=E5-E6');
+  d.getRange('D8').setValue('Daily income goal');   d.getRange('E8').setValue(CONFIG.DAILY_GOAL);
+  d.getRange('D9').setValue('Annual profit pace');  d.getRange('E9').setFormula('=E7*12');
+  d.getRange('D4:E9').setBorder(true, true, true, true, true, true);
+  d.setColumnWidth(4, 200); d.setColumnWidth(5, 140);
   var r = 5 + kpis.length + 2; // running row, with a gap after the KPI block
 
   d.getRange(r, 1).setValue('Per-employee totals (all-time)').setFontWeight('bold');

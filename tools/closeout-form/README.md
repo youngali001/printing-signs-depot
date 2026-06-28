@@ -8,6 +8,7 @@ Script**. One deployment serves three pages staff open on a phone/tablet:
 | **Close-out** | `…/exec` | End-of-day money, postage, packages, employees |
 | **Opening** | `…/exec?page=open` | Morning bank count + opening checklist |
 | **Appointments** | `…/exec?page=appt` | Log notary / passport appointments |
+| **Income calculator (owner)** | `…/exec?page=calc` | What-if profit calculator — **owner PIN**, not linked in staff nav |
 
 ## What the close-out does on Submit
 1. **Over/short** — computes expected drawer (starting bank + cash − petty cash)
@@ -81,6 +82,7 @@ guesses column positions and can drop wrong numbers into cells. See
 | `index.html` | HTML file named **`index`** (close-out) |
 | `opening.html` | HTML file named **`opening`** |
 | `appointments.html` | HTML file named **`appointments`** |
+| `calculator.html` | HTML file named **`calculator`** (owner income calculator) |
 | `gemini-dashboard-prompt.md` | reference — paste into Gemini in Sheets (not Apps Script) |
 
 ---

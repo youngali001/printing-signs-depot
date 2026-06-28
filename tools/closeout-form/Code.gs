@@ -43,6 +43,10 @@ var CONFIG = {
   // Shared staff PIN to open the app. Set '' to disable the PIN gate.
   STAFF_PIN: '1234',
 
+  // Owner-only PIN for the income calculator page (?page=calc). Make it
+  // different from STAFF_PIN so staff can't open the profit calculator.
+  OWNER_PIN: '9999',
+
   // Flag the till as off when |over/short| exceeds this many dollars.
   OVER_SHORT_TOLERANCE: 5,
 
@@ -86,7 +90,10 @@ var CONFIG = {
 // ---- Routing --------------------------------------------------------
 function doGet(e) {
   var page = (e && e.parameter && e.parameter.page) || '';
-  var file = page === 'open' ? 'opening' : (page === 'appt' ? 'appointments' : 'index');
+  var file = page === 'open' ? 'opening'
+    : page === 'appt' ? 'appointments'
+    : page === 'calc' ? 'calculator'
+    : 'index';
   var t = HtmlService.createTemplateFromFile(file);
   t.appUrl = ScriptApp.getService().getUrl(); // real /exec URL for nav links
   return t.evaluate()
@@ -103,6 +110,10 @@ function getSupplies() {
 function validatePin(pin) {
   if (!CONFIG.STAFF_PIN) return true;
   return String(pin) === String(CONFIG.STAFF_PIN);
+}
+function validateOwnerPin(pin) {
+  if (!CONFIG.OWNER_PIN) return true;
+  return String(pin) === String(CONFIG.OWNER_PIN);
 }
 
 // ---- Cross-page lookups ---------------------------------------------

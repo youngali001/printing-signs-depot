@@ -10,7 +10,8 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:var(--bg);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
     line-height:1.5;padding:16px;max-width:900px;margin:0 auto}
-  h1{font-size:1.4rem}.sub{color:var(--muted);font-size:.9rem;margin-bottom:16px}
+  h1{font-size:1.4rem}.sub{color:var(--muted);font-size:.9rem;margin-bottom:12px}
+  .tip{background:rgba(245,197,24,.12);border:1px solid var(--warn);border-radius:9px;padding:9px 11px;font-size:.82rem;margin-bottom:16px}
   .wrap{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
   .col{flex:1;min-width:300px}
   fieldset{border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:16px;background:var(--card)}
@@ -19,11 +20,11 @@
   .ctrlhead{display:flex;justify-content:space-between;font-size:.88rem;margin-bottom:5px}
   .ctrlhead .inc{color:var(--ok);font-weight:700}
   .ctrlrow{display:flex;align-items:center;gap:8px}
-  input[type=range]{flex:1;accent-color:var(--blue)}
-  input[type=number]{width:80px;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:#0c1622;color:#fff;font-size:.95rem}
+  input[type=range]{flex:1;min-width:90px;accent-color:var(--blue)}
+  input[type=number]{width:78px;padding:7px 8px;border-radius:8px;border:1px solid var(--line);background:#0c1622;color:#fff;font-size:.95rem}
   .x{color:var(--muted);font-size:.85rem}
-  input.rate{width:62px;border-style:dashed}
-  .opts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  input.rate{width:60px;border-style:dashed}
+  .opts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
   .opts label{font-size:.82rem;color:var(--muted)}
   .toggle{display:inline-flex;border:1px solid var(--line);border-radius:20px;overflow:hidden}
   .toggle button{padding:7px 14px;background:transparent;color:var(--muted);border:none;cursor:pointer;font-size:.82rem}
@@ -43,7 +44,8 @@
 </head>
 <body>
   <h1>Daily Income Calculator</h1>
-  <div class="sub">Slide the volumes (or type them) to see what a day earns and whether it clears breakeven and your goal. Rates are editable — change them to test different scenarios.</div>
+  <div class="sub">Slide the volumes (or type them) to see what a day earns and whether it clears breakeven and your goal. Rates are editable.</div>
+  <div class="tip">⚠️ Open this in <b>Safari or Chrome</b> (not a chat/file preview) — the live math needs JavaScript.</div>
 
   <div class="opts">
     <span style="font-size:.82rem;color:var(--muted)">Loan payment:</span>
@@ -59,14 +61,86 @@
     <div class="col">
       <fieldset>
         <legend>Volume (× rate = income)</legend>
-        <div id="controls"></div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Weigh-in + special mail processed ($)</span><span class="inc" id="inc_mail">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_mail" min="0" max="3000" step="25" value="1000">
+            <input type="number" id="num_mail" min="0" step="25" value="1000">
+            <span class="x">×</span><input type="number" class="rate" id="rate_mail" step="0.001" value="0.195">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Prepaid packages (#)</span><span class="inc" id="inc_prepaid">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_prepaid" min="0" max="400" step="5" value="100">
+            <input type="number" id="num_prepaid" min="0" step="5" value="100">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_prepaid" step="0.05" value="0.25">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Passport renewals (#)</span><span class="inc" id="inc_passport">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_passport" min="0" max="15" step="1" value="5">
+            <input type="number" id="num_passport" min="0" step="1" value="5">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_passport" step="1" value="35">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Notaries (#)</span><span class="inc" id="inc_notary">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_notary" min="0" max="20" step="1" value="6">
+            <input type="number" id="num_notary" min="0" step="1" value="6">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_notary" step="1" value="11">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Fax pages (#)</span><span class="inc" id="inc_fax">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_fax" min="0" max="60" step="1" value="20">
+            <input type="number" id="num_fax" min="0" step="1" value="20">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_fax" step="0.25" value="1.5">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Copies 1–3 pages (#)</span><span class="inc" id="inc_copyS">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_copyS" min="0" max="60" step="1" value="15">
+            <input type="number" id="num_copyS" min="0" step="1" value="15">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_copyS" step="0.5" value="1">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Copies 4–10 pages (#)</span><span class="inc" id="inc_copyL">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_copyL" min="0" max="30" step="1" value="5">
+            <input type="number" id="num_copyL" min="0" step="1" value="5">
+            <span class="x">× $</span><input type="number" class="rate" id="rate_copyL" step="0.5" value="3">
+          </div>
+        </div>
+
+        <div class="ctrl">
+          <div class="ctrlhead"><span>Packing supplies sold ($ retail)</span><span class="inc" id="inc_supplies">$0.00</span></div>
+          <div class="ctrlrow">
+            <input type="range" id="rng_supplies" min="0" max="400" step="5" value="80">
+            <input type="number" id="num_supplies" min="0" step="5" value="80">
+            <span class="x">×</span><input type="number" class="rate" id="rate_supplies" step="0.1" value="1">
+          </div>
+        </div>
+
       </fieldset>
     </div>
 
     <div class="col">
       <fieldset class="results">
         <legend>Results</legend>
-        <div class="k" style="font-size:.8rem;color:var(--muted)">Income per day</div>
+        <div style="font-size:.8rem;color:var(--muted)">Income per day</div>
         <div class="big" id="perDay">$0.00</div>
         <div class="bar"><div id="barFill"></div></div>
         <div class="mini" id="goalPct">0% of $600 goal</div>
@@ -79,84 +153,53 @@
           <div class="stat"><div class="k">Monthly profit</div><div class="v" id="moProf">$0</div></div>
           <div class="stat"><div class="k">Annual profit</div><div class="v" id="yrProf">$0</div></div>
         </div>
-        <div class="mini">Breakeven = (operating $7,109 + loan) ÷ open days. Income is what the business keeps (commission + fees + supplies). Set aside ~25–30% of profit for taxes.</div>
+        <div class="mini">Breakeven = (operating $7,109 + loan) ÷ open days. Income = what the business keeps (commission + fees + supplies). Set aside ~25–30% of profit for taxes.</div>
       </fieldset>
     </div>
   </div>
 
 <script>
-  var OPERATING = 7109; // monthly fixed operating costs
-  // key, label, min, max, step, default value, default rate, rate unit label
-  var ITEMS = [
-    {key:'mail',     label:'Weigh-in + special mail processed ($)', min:0, max:3000, step:25, val:1000, rate:0.195, unit:'×%'},
-    {key:'prepaid',  label:'Prepaid packages (#)',                  min:0, max:400,  step:5,  val:100,  rate:0.25,  unit:'$ ea'},
-    {key:'passport', label:'Passport renewals (#)',                 min:0, max:15,   step:1,  val:5,    rate:35,    unit:'$ ea'},
-    {key:'notary',   label:'Notaries (#)',                          min:0, max:20,   step:1,  val:6,    rate:11,    unit:'$ ea'},
-    {key:'fax',      label:'Fax pages (#)',                         min:0, max:60,   step:1,  val:20,   rate:1.5,   unit:'$ ea'},
-    {key:'copyS',    label:'Copies 1–3 pages (#)',                  min:0, max:60,   step:1,  val:15,   rate:1,     unit:'$ ea'},
-    {key:'copyL',    label:'Copies 4–10 pages (#)',                 min:0, max:30,   step:1,  val:5,    rate:3,     unit:'$ ea'},
-    {key:'supplies', label:'Packing supplies sold ($ retail)',      min:0, max:400,  step:5,  val:80,   rate:1,     unit:'×'}
-  ];
+  var OPERATING = 7109;
+  var KEYS = ['mail','prepaid','passport','notary','fax','copyS','copyL','supplies'];
   var loan = 500;
   var $ = function(id){ return document.getElementById(id); };
   var fmt = function(v){ return (v<0?'-$':'$') + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); };
   var fmt0 = function(v){ return (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString(); };
 
-  // build controls
-  var c = $('controls');
-  ITEMS.forEach(function(it){
-    var d = document.createElement('div'); d.className='ctrl';
-    d.innerHTML =
-      '<div class="ctrlhead"><span>'+it.label+'</span><span class="inc" id="inc_'+it.key+'">$0.00</span></div>'+
-      '<div class="ctrlrow">'+
-        '<input type="range" id="rng_'+it.key+'" min="'+it.min+'" max="'+it.max+'" step="'+it.step+'" value="'+it.val+'">'+
-        '<input type="number" id="num_'+it.key+'" value="'+it.val+'" min="'+it.min+'" step="'+it.step+'">'+
-        '<span class="x">'+(it.unit==='×%'?'× ':'')+'</span>'+
-        '<input type="number" class="rate" id="rate_'+it.key+'" value="'+it.rate+'" step="'+(it.rate<1?0.01:1)+'" title="rate">'+
-      '</div>';
-    c.appendChild(d);
-    var rng=d.querySelector('#rng_'+it.key), num=d.querySelector('#num_'+it.key);
+  KEYS.forEach(function(k){
+    var rng=$('rng_'+k), num=$('num_'+k), rate=$('rate_'+k);
     rng.addEventListener('input', function(){ num.value=rng.value; compute(); });
     num.addEventListener('input', function(){ rng.value=num.value; compute(); });
-    d.querySelector('#rate_'+it.key).addEventListener('input', compute);
+    rate.addEventListener('input', compute);
   });
-
-  // loan toggle
   [].forEach.call($('loanToggle').querySelectorAll('button'), function(b){
     b.addEventListener('click', function(){
       [].forEach.call($('loanToggle').querySelectorAll('button'), function(x){ x.classList.remove('on'); });
-      b.classList.add('on'); loan = parseFloat(b.dataset.loan); compute();
+      b.classList.add('on'); loan = parseFloat(b.getAttribute('data-loan')); compute();
     });
   });
   ['openDays','goal'].forEach(function(id){ $(id).addEventListener('input', compute); });
 
   function compute(){
     var total = 0;
-    ITEMS.forEach(function(it){
-      var v = parseFloat($('num_'+it.key).value)||0;
-      var r = parseFloat($('rate_'+it.key).value)||0;
-      var inc = v * r;
-      $('inc_'+it.key).textContent = fmt(inc);
-      total += inc;
+    KEYS.forEach(function(k){
+      var v = parseFloat($('num_'+k).value)||0;
+      var r = parseFloat($('rate_'+k).value)||0;
+      var inc = v*r; $('inc_'+k).textContent = fmt(inc); total += inc;
     });
     var openDays = parseFloat($('openDays').value)||25;
     var goal = parseFloat($('goal').value)||600;
     var monthlyCost = OPERATING + loan;
-    var beDay = monthlyCost / openDays;
-    var profDay = total - beDay;
-    var moInc = total * openDays;
-    var moProf = moInc - monthlyCost;
+    var beDay = monthlyCost/openDays;
+    var profDay = total-beDay, moInc = total*openDays, moProf = moInc-monthlyCost;
 
     $('perDay').textContent = fmt(total);
-    var pct = Math.min(100, goal>0 ? (total/goal*100) : 0);
-    $('barFill').style.width = pct + '%';
+    $('barFill').style.width = Math.min(100, goal>0?total/goal*100:0) + '%';
     $('goalPct').textContent = Math.round(goal>0?total/goal*100:0) + '% of ' + fmt0(goal) + ' goal';
-
-    var badge = $('badge');
-    if(total < beDay){ badge.textContent='⚠️ Below breakeven'; badge.style.background='rgba(212,40,110,.18)'; badge.style.color='#ff7ab0'; }
-    else if(total < goal){ badge.textContent='✅ Profitable'; badge.style.background='rgba(245,197,24,.18)'; badge.style.color='#F5C518'; }
+    var badge=$('badge');
+    if(total<beDay){ badge.textContent='⚠️ Below breakeven'; badge.style.background='rgba(212,40,110,.18)'; badge.style.color='#ff7ab0'; }
+    else if(total<goal){ badge.textContent='✅ Profitable'; badge.style.background='rgba(245,197,24,.18)'; badge.style.color='#F5C518'; }
     else { badge.textContent='🎯 Hitting the goal'; badge.style.background='rgba(46,204,113,.18)'; badge.style.color='#2ecc71'; }
-
     $('beDay').textContent = fmt0(beDay);
     var pd=$('profDay'); pd.textContent=fmt0(profDay); pd.className='v '+(profDay>=0?'pos':'neg');
     $('moInc').textContent = fmt0(moInc);

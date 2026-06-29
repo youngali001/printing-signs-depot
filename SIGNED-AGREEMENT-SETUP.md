@@ -1,87 +1,106 @@
-# Auto-save signed agreements to your Google Drive
+# Save signed agreements to your Google Drive — easy setup
 
-`offer.html` can send every **signed** agreement straight to your Google
-Drive. Because a public web page isn't allowed to write to your Drive on its
-own, a tiny **Google Apps Script** acts as the bridge — it runs under your
-Google account and saves each submission into a Drive folder.
+Goal: when a customer signs the offer page, a copy lands in your Google Drive
+automatically.
 
-This is a **one-time, ~5-minute setup**. No server or hosting bill.
+You only do this **once**. It takes about 5 minutes. No cost.
 
----
-
-## What you get
-
-When a customer picks a package, checks **"I agree"**, signs, and clicks
-**Confirm & Submit**, a copy of the signed agreement (including their drawn
-signature) is saved to:
-
-> **My Drive › Signed Agreements - Printing & Signs Depot**
-
-Each submission is saved as an `.html` file (and a `.pdf` copy when it can be
-generated), named like:
-
-> `Signed Agreement - Jane Smith - 2026-06-29_14-30.html`
+Do the steps in order. Don't worry about what the code means — you're just
+copying and pasting.
 
 ---
 
-## Step 1 — Create the Apps Script
+## Part 1 — Put the code online (so it can save to your Drive)
 
-1. Go to **https://script.google.com** and click **New project**.
-2. Delete the sample code in `Code.gs`.
-3. Open `signed-agreement-upload.gs` from this repo, copy **all** of it, and
-   paste it into the editor.
-4. Click the **Save** icon (name the project anything, e.g. *PSD Agreements*).
+**Step 1.** Make sure you're signed in to the Google account where you want
+the files saved (your q.ali.enterprise@gmail.com).
 
-## Step 2 — Deploy it as a Web App
+**Step 2.** Go to **https://script.google.com**
 
-1. Click **Deploy › New deployment**.
-2. Click the gear ⚙ next to "Select type" and choose **Web app**.
-3. Set:
-   - **Description:** anything (e.g. `Signed agreement uploader`)
-   - **Execute as:** **Me (your@gmail.com)**
-   - **Who has access:** **Anyone**
-     *(required so the public offer page can post to it; the script only
-     ever writes to your Drive)*
-4. Click **Deploy**.
-5. Click **Authorize access** and approve the permissions (it asks to manage
-   files it creates in your Drive). If Google shows an "unverified app"
-   warning, click **Advanced › Go to … (unsafe)** — this is your own script.
-6. Copy the **Web app URL**. It looks like:
-   `https://script.google.com/macros/s/AKfycb..../exec`
+**Step 3.** Click the **New project** button (top left).
 
-## Step 3 — Paste the URL into the offer page
+**Step 4.** You'll see a box with some sample code in it. Click inside that
+box, select everything (**Ctrl+A**, or **Cmd+A** on Mac), and delete it so the
+box is empty.
 
-1. Open `offer.html`.
-2. Near the top of the `<script>` block, find:
-   ```js
-   var UPLOAD_URL = '';
-   ```
-3. Paste your Web app URL between the quotes:
-   ```js
-   var UPLOAD_URL = 'https://script.google.com/macros/s/AKfycb..../exec';
-   ```
-4. Save. Done — signed agreements now upload automatically.
+**Step 5.** In this project, open the file named **`signed-agreement-upload.gs`**.
+Select all of it, copy it, and paste it into that empty box.
+
+**Step 6.** Press **Ctrl+S** (Mac: **Cmd+S**) to save. If it asks for a project
+name, type anything like `Agreements` and click OK.
+
+✅ Part 1 done.
 
 ---
 
-## Test it
+## Part 2 — Turn it on (publish it)
 
-1. Open `offer.html` in a browser.
-2. Pick a package, check **I agree**, type a name, sign, click **Confirm &
-   Submit**.
-3. Check your Drive for the **Signed Agreements - Printing & Signs Depot**
-   folder — your test submission should be there within a few seconds.
+**Step 7.** Near the top right, click the blue **Deploy** button, then click
+**New deployment**.
 
-## Notes & troubleshooting
+**Step 8.** Click the little gear ⚙ (top left of the popup) and choose
+**Web app**.
 
-- **Nothing showed up?** Re-open the Web app URL in a browser; you should see
-  `{"ok":true,...}`. If not, re-check Step 2 (Execute as *Me*, access
-  *Anyone*).
-- **Changed the script later?** You must **Deploy › Manage deployments › Edit
-  › New version** for changes to take effect (the `/exec` URL stays the same).
-- **Leave `UPLOAD_URL` blank** and the page simply shows an on-screen
-  confirmation and the **Print / Save PDF** option instead of uploading.
-- The page never exposes any Google credentials — it only knows the public
-  `/exec` URL, and the script can only write files in *your* Drive.
-- Want submissions emailed to you too, or logged to a Google Sheet? That's a
-  small addition to the script — just ask.
+**Step 9.** Fill in the boxes exactly like this:
+- **Execute as:** **Me**
+- **Who has access:** **Anyone**
+
+**Step 10.** Click **Deploy**.
+
+**Step 11.** It will ask for permission. Click **Authorize access**, choose
+your Google account, and click **Allow**.
+- If you see a scary "Google hasn't verified this app" screen, click
+  **Advanced**, then **Go to … (unsafe)**. This is safe — it's your own code.
+
+**Step 12.** A link appears that ends in **`/exec`**. Click **Copy** to copy
+it. **Keep this link** — you need it in the next part.
+
+✅ Part 2 done.
+
+---
+
+## Part 3 — Connect it to your offer page
+
+**Step 13.** Open the file **`offer.html`**.
+
+**Step 14.** Use Find (**Ctrl+F** / **Cmd+F**) and search for:
+`UPLOAD_URL`
+
+**Step 15.** You'll see this line:
+```
+var UPLOAD_URL = '';
+```
+Paste your link from Step 12 **between the two quotes**, so it looks like:
+```
+var UPLOAD_URL = 'https://script.google.com/macros/s/AKfycb..../exec';
+```
+
+**Step 16.** Save the file.
+
+✅ Done! Signed agreements now save to your Drive automatically.
+
+---
+
+## Check that it works
+
+1. Open **`offer.html`** in your web browser.
+2. Click a package, check the **I agree** box, type a name, sign, and click
+   **Confirm & Submit**.
+3. Go to your Google Drive. You should see a folder called
+   **Signed Agreements - Printing & Signs Depot** with your test inside it.
+
+---
+
+## If something's not right
+
+- **No folder showed up?** Re-do Part 2. The two most common misses are
+  **Execute as: Me** and **Who has access: Anyone**.
+- **You want to double-check the link works:** paste your `/exec` link into a
+  browser. You should see a short message starting with `{"ok":true`.
+- **You changed the code later?** In script.google.com click **Deploy → Manage
+  deployments → ✏️ (edit) → New version → Deploy**. (Your link stays the same.)
+- **Leave `UPLOAD_URL` blank** any time and the page just shows a thank-you
+  message instead of uploading. Nothing breaks.
+
+Want it to also email you each signed copy, or you'd rather not deal with the
+setup at all? Tell me and I'll set up an easier route.

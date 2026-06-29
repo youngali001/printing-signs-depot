@@ -892,6 +892,16 @@ var PACKAGES = {
   }
 };
 
+/* ───────────────────────────────────────────────
+   UPLOAD TARGET
+   Paste your Google Apps Script Web App URL between
+   the quotes to auto-save every signed agreement to
+   your Google Drive. Leave blank to disable upload
+   (the page then just shows a confirmation message).
+   One-time setup: see SIGNED-AGREEMENT-SETUP.md
+─────────────────────────────────────────────── */
+var UPLOAD_URL = '';
+
 var selected = null;
 var cards = document.querySelectorAll('.pkg-card');
 var agreeBox = document.getElementById('agreeBox');
@@ -946,6 +956,9 @@ agreeCheck.addEventListener('change', updateConfirm);
 })();
 
 /* ═══════════ SIGNATURE PAD ═══════════ */
+/* exposed so the submit handler can read the drawn signature */
+var getSignatureDataUrl = function () { return null; };
+
 (function () {
   var canvas = document.getElementById('sigpad');
   var ctx = canvas.getContext('2d');
@@ -1002,22 +1015,112 @@ agreeCheck.addEventListener('change', updateConfirm);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     hasInk = false;
   });
+
+  getSignatureDataUrl = function () { return hasInk ? canvas.toDataURL('image/png') : null; };
 })();
 
 /* ═══════════ ACTIONS ═══════════ */
 document.getElementById('printBtn').addEventListener('click', function () { window.print(); });
 
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>”]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '”': '&quot;' }[c];
+  });
+}
+
+/* Build a clean, self-contained signed record (signature embedded) to store in Drive. */
+function buildSignedDocumentHtml(p, name, biz, date, sigDataUrl) {
+  var when = new Date().toLocaleString();
+  var sigBlock = sigDataUrl
+    ? '<img src=”' + sigDataUrl + '” alt=”Customer signature” style=”max-width:320px;border-bottom:1px solid #1B2A3B;”>'
+    : '<span style=”font-style:italic;color:#5a6470;”>Agreed electronically via the “I agree” checkbox (no drawn signature).</span>';
+  var terms = p.terms.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('');
+  return '<!DOCTYPE html><html><head><meta charset=”UTF-8”><title>Signed Agreement — ' + esc(name) + '</title>' +
+    '<style>body{font-family:Arial,Helvetica,sans-serif;color:#1a1f25;max-width:720px;margin:24px auto;padding:0 20px;line-height:1.6;}' +
+    'h1{font-size:20px;margin:0 0 4px;}h2{font-size:15px;margin:24px 0 8px;color:#1B2A3B;}' +
+    '.muted{color:#5a6470;font-size:12px;}.box{border:2px solid #1B2A3B;border-radius:8px;padding:14px 16px;margin:12px 0;}' +
+    '.price{color:#D4286E;font-weight:bold;}table{width:100%;border-collapse:collapse;margin-top:8px;}' +
+    'td{padding:6px 0;vertical-align:top;}td:first-child{color:#5a6470;width:140px;font-size:13px;}</style></head><body>' +
+    '<h1>Printing &amp; Signs Depot</h1>' +
+    '<div class=”muted”>Monthly Service Agreement · 10861 Cross Creek Blvd, Tampa, FL 33647 · 813.753.1606 · q@printingnsigns.com</div>' +
+    '<div class=”box”><div class=”muted”>PACKAGE AGREED TO</div>' +
+    '<div style=”font-size:16px;font-weight:bold;”>' + esc(p.name) + ' <span class=”price”>' + esc(p.price) + '</span></div>' +
+    '<ul>' + terms + '</ul></div>' +
+    '<h2>Customer</h2><table>' +
+    '<tr><td>Full name</td><td>' + esc(name) + '</td></tr>' +
+    '<tr><td>Business</td><td>' + esc(biz || '—') + '</td></tr>' +
+    '<tr><td>Date</td><td>' + esc(date) + '</td></tr>' +
+    '<tr><td>Consent</td><td>&#10003; “I agree” checked</td></tr>' +
+    '<tr><td>Signature</td><td>' + sigBlock + '</td></tr>' +
+    '</table>' +
+    '<h2>On behalf of Printing &amp; Signs Depot</h2>' +
+    '<div style=”font-size:18px;font-style:italic;font-weight:bold;”>Qayyim Ali</div>' +
+    '<div class=”muted”>Owner · Printing &amp; Signs Depot</div>' +
+    '<p class=”muted” style=”margin-top:24px;”>Submitted ' + esc(when) + ' · Ref: PSD-MONTHLY-' + esc(selected) + '</p>' +
+    '</body></html>';
+}
+
 document.getElementById('confirmBtn').addEventListener('click', function () {
   if (confirmBtn.disabled) return;
   var p = PACKAGES[selected];
   var name = document.getElementById('custName').value.trim();
+  var biz = document.getElementById('custBiz').value.trim();
+  var date = document.getElementById('custDate').value;
   var msg = document.getElementById('confirmMsg');
-  msg.innerHTML = '<strong>Thank you' + (name ? ', ' + name : '') + '!</strong> You\'ve selected <strong>' +
-    p.name + '</strong> at ' + p.price + '. ' +
-    'To finalize, call us at <a href="tel:8137531606">813.753.1606</a> or email ' +
-    '<a href="mailto:q@printingnsigns.com?subject=' + encodeURIComponent('Monthly Package — ' + p.name) +
-    '">q@printingnsigns.com</a>, or use “Print / Save PDF” to keep a signed copy.';
   msg.classList.add('show');
+
+  if (!name) {
+    msg.innerHTML = '<strong>Please add your name</strong> above so we know who is signing.';
+    document.getElementById('custName').focus();
+    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  var sigDataUrl = getSignatureDataUrl();
+  var signedHtml = buildSignedDocumentHtml(p, name, biz, date, sigDataUrl);
+
+  // No upload endpoint configured — just confirm on screen.
+  if (!UPLOAD_URL) {
+    msg.innerHTML = '<strong>Thank you, ' + esc(name) + '!</strong> You\'ve selected <strong>' +
+      esc(p.name) + '</strong> at ' + esc(p.price) + '. ' +
+      'To finalize, call <a href=”tel:8137531606”>813.753.1606</a> or email ' +
+      '<a href=”mailto:q@printingnsigns.com?subject=' + encodeURIComponent('Monthly Package — ' + p.name) +
+      '”>q@printingnsigns.com</a>, or use “Print / Save PDF” to keep a signed copy.';
+    msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+
+  // Send the signed agreement to the Drive uploader (Apps Script Web App).
+  msg.innerHTML = 'Submitting your signed agreement…';
+  var payload = {
+    package: p.name,
+    price: p.price,
+    terms: p.terms,
+    customerName: name,
+    business: biz,
+    date: date,
+    agreed: true,
+    signatureDataUrl: sigDataUrl || '',
+    submittedAt: new Date().toISOString(),
+    fullDocumentHtml: signedHtml
+  };
+
+  // text/plain avoids a CORS preflight; no-cors fire-and-forget (we can't read the opaque response).
+  fetch(UPLOAD_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(payload)
+  }).then(function () {
+    confirmBtn.disabled = true;
+    msg.innerHTML = '<strong>Thank you, ' + esc(name) + '!</strong> Your signed agreement for <strong>' +
+      esc(p.name) + '</strong> (' + esc(p.price) + ') has been submitted. ' +
+      'We\'ll reach out at <a href=”tel:8137531606”>813.753.1606</a> to get you started. ' +
+      'Feel free to use “Print / Save PDF” to keep your own copy.';
+  }).catch(function () {
+    msg.innerHTML = '<strong>We couldn\'t submit automatically.</strong> Please use “Print / Save PDF” to save your signed copy ' +
+      'and email it to <a href=”mailto:q@printingnsigns.com”>q@printingnsigns.com</a>, or call 813.753.1606.';
+  });
   msg.scrollIntoView({ behavior: 'smooth', block: 'center' });
 });
 </script>

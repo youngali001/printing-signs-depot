@@ -1,0 +1,177 @@
+/* ============================================================================
+ * styles.css — iPad-first field app. Large touch targets, high contrast.
+ * ========================================================================== */
+:root {
+  --navy: #1B2A3B;
+  --navy-deep: #0D1520;
+  --cyan: #2BAADC;
+  --magenta: #D4286E;
+  --green: #21A366;
+  --amber: #F5A623;
+  --bg: #F4F6F9;
+  --card: #FFFFFF;
+  --line: #E2E8F0;
+  --text: #1B2A3B;
+  --muted: #5A6B7B;
+  --danger: #D4286E;
+  --radius: 14px;
+  --shadow: 0 2px 12px rgba(27,42,59,0.08);
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 17px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ---- Top bar ---- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: var(--navy); color: #fff;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 18px;
+  padding-top: max(14px, env(safe-area-inset-top));
+}
+.topbar h1 { font-size: 18px; margin: 0; font-weight: 700; flex: 1; }
+.topbar .logo { font-weight: 800; letter-spacing: .5px; }
+.sync-chip {
+  font-size: 13px; padding: 6px 12px; border-radius: 999px;
+  background: rgba(255,255,255,.14); display: inline-flex; align-items: center; gap: 6px;
+}
+.sync-chip.ok { background: rgba(33,163,102,.25); }
+.sync-chip.pending { background: rgba(245,166,35,.25); }
+
+/* ---- Layout ---- */
+.wrap { max-width: 820px; margin: 0 auto; padding: 18px; padding-bottom: 120px; }
+.screen { display: none; }
+.screen.active { display: block; }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px; margin-bottom: 16px;
+}
+.card h2 { margin: 0 0 4px; font-size: 20px; }
+.card .sub { color: var(--muted); font-size: 14px; margin-bottom: 14px; }
+
+/* ---- Buttons ---- */
+.btn {
+  appearance: none; border: none; cursor: pointer;
+  font-size: 17px; font-weight: 600; font-family: inherit;
+  padding: 15px 20px; border-radius: 12px; min-height: 52px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: var(--cyan); color: #fff; width: 100%;
+  transition: transform .05s ease, filter .15s ease;
+}
+.btn:active { transform: scale(.985); filter: brightness(.95); }
+.btn.secondary { background: #EEF2F6; color: var(--navy); }
+.btn.ghost { background: transparent; color: var(--cyan); border: 2px solid var(--cyan); }
+.btn.success { background: var(--green); }
+.btn.danger { background: var(--danger); }
+.btn.small { width: auto; min-height: 44px; padding: 10px 16px; font-size: 15px; }
+.btn[disabled] { opacity: .45; pointer-events: none; }
+.btn-row { display: flex; gap: 12px; }
+.btn-row .btn { width: auto; flex: 1; }
+
+/* ---- Forms ---- */
+label.field { display: block; margin-bottom: 14px; }
+label.field span { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin-bottom: 6px; }
+input[type=text], input[type=date], textarea {
+  width: 100%; font-size: 17px; font-family: inherit; color: var(--text);
+  padding: 13px 14px; border: 1.5px solid var(--line); border-radius: 11px;
+  background: #fff;
+}
+textarea { min-height: 84px; resize: vertical; }
+input:focus, textarea:focus { outline: none; border-color: var(--cyan); }
+
+/* ---- Agreement picker ---- */
+.pick {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px; border: 1.5px solid var(--line); border-radius: 12px; margin-bottom: 10px;
+  background: #fff;
+}
+.pick.on { border-color: var(--cyan); background: #F0F9FD; }
+.pick .toggle {
+  width: 30px; height: 30px; flex: 0 0 30px; border-radius: 8px;
+  border: 2px solid var(--line); display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: #fff; font-weight: 700;
+}
+.pick.on .toggle { background: var(--cyan); border-color: var(--cyan); }
+.pick .meta { flex: 1; }
+.pick .meta .t { font-weight: 600; }
+.pick .meta .w { font-size: 13px; color: var(--muted); }
+.pick .code { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---- Progress / steps ---- */
+.steps { display: flex; gap: 6px; margin-bottom: 16px; }
+.steps .dot { flex: 1; height: 5px; border-radius: 3px; background: var(--line); }
+.steps .dot.done { background: var(--green); }
+.steps .dot.cur { background: var(--cyan); }
+
+/* ---- Agreement reader ---- */
+.doc-body h3 { font-size: 16px; margin: 18px 0 6px; }
+.doc-body p { margin: 0 0 10px; }
+.doc-body ol { margin: 0 0 10px; padding-left: 22px; }
+.doc-body li { margin-bottom: 6px; }
+.doc-fields { background: #F7FAFC; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
+
+/* ---- Signature / initials ---- */
+.sig-slot { border: 1.5px dashed var(--cyan); border-radius: 12px; padding: 12px; margin: 12px 0; background: #FbFdff; }
+.sig-slot.done { border-style: solid; border-color: var(--green); background: #F1FBF6; }
+.sig-slot .lab { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.sig-preview { height: 70px; display: flex; align-items: center; }
+.sig-preview img { max-height: 66px; max-width: 100%; }
+.initial-slot { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1.5px solid var(--line); border-radius: 12px; margin: 10px 0; }
+.initial-slot.done { border-color: var(--green); background: #F1FBF6; }
+.initial-slot .lab { flex: 1; font-size: 14px; }
+.initial-slot .box { width: 64px; height: 44px; border: 1.5px dashed var(--muted); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 12px; }
+.initial-slot.done .box { border-style: solid; border-color: var(--green); }
+.initial-slot .box img { max-width: 60px; max-height: 40px; }
+
+/* ---- Photos ---- */
+.photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 10px; margin-top: 10px; }
+.photo-tile { position: relative; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); aspect-ratio: 1; }
+.photo-tile img { width: 100%; height: 100%; object-fit: cover; }
+.photo-tile .rm { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.6); color: #fff; border: none; width: 28px; height: 28px; border-radius: 50%; font-size: 16px; }
+.photo-tile .cap { position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,.55); color: #fff; font-size: 11px; padding: 3px 6px; }
+
+/* ---- Modal (signature capture) ---- */
+.modal-back { position: fixed; inset: 0; background: rgba(13,21,32,.6); z-index: 100; display: none; align-items: center; justify-content: center; padding: 16px; }
+.modal-back.open { display: flex; }
+.modal { background: #fff; border-radius: 16px; width: 100%; max-width: 640px; padding: 18px; }
+.modal h3 { margin: 0 0 4px; }
+.modal .hint { color: var(--muted); font-size: 14px; margin-bottom: 12px; }
+.pad-wrap { border: 2px solid var(--cyan); border-radius: 12px; background: #fff; touch-action: none; }
+canvas.pad { width: 100%; height: 260px; display: block; border-radius: 10px; }
+canvas.pad.initials { height: 160px; }
+
+/* ---- Job list ---- */
+.job-item { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--line); }
+.job-item:last-child { border-bottom: none; }
+.job-item .info { flex: 1; }
+.job-item .info .n { font-weight: 600; }
+.job-item .info .d { font-size: 13px; color: var(--muted); }
+.badge { font-size: 12px; padding: 4px 9px; border-radius: 999px; font-weight: 600; }
+.badge.draft { background: #FFF3DC; color: #A9741B; }
+.badge.signed { background: #E4F7EE; color: #1A7A4C; }
+
+.disclaimer { font-size: 12px; color: var(--muted); background: #FFF8E7; border: 1px solid #F3E3B3; border-radius: 10px; padding: 10px 12px; margin-bottom: 16px; }
+.empty { text-align: center; color: var(--muted); padding: 40px 20px; }
+.spacer { height: 8px; }
+
+/* ---- Bottom action bar ---- */
+.actionbar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 40;
+  background: rgba(255,255,255,.96); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line);
+  padding: 12px 18px; padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+.actionbar .wrap-bar { max-width: 820px; margin: 0 auto; display: flex; gap: 12px; }
+.actionbar .btn { width: auto; flex: 1; }
+.hidden { display: none !important; }

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Field Agreements">
+<meta name="theme-color" content="#1B2A3B">
+<title>Field Agreements</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">🛠️ Field Agreements</span>
+  <h1></h1>
+  <span id="syncChip" class="sync-chip">Local only</span>
+</div>
+
+<div class="wrap">
+
+  <!-- ============ HOME ============ -->
+  <section id="screen-home" class="screen active">
+    <div class="disclaimer">⚠️ These are template documents, not legal advice. Have a licensed attorney review the agreement language before use.</div>
+    <button class="btn success" id="btnNewJob">➕ Start New Job</button>
+    <div class="spacer"></div>
+    <button class="btn secondary" id="btnSettings">⚙️ Company Settings</button>
+
+    <div class="card" style="margin-top:16px;">
+      <h2>Recent jobs</h2>
+      <div class="sub">Everything is saved on this iPad. Tap a job to reopen or re-download its PDF.</div>
+      <div id="jobList"></div>
+    </div>
+  </section>
+
+  <!-- ============ SETTINGS ============ -->
+  <section id="screen-settings" class="screen">
+    <div class="card">
+      <h2>Company Settings</h2>
+      <div class="sub">Set once — auto-fills into every agreement. Stored on this device.</div>
+      <label class="field"><span>Company legal name</span><input type="text" id="set-companyLegalName" placeholder="ABC Handyman LLC"></label>
+      <label class="field"><span>DBA / trade name</span><input type="text" id="set-dbaName" placeholder="ABC Handyman"></label>
+      <label class="field"><span>State license #</span><input type="text" id="set-license" placeholder="FL-123456"></label>
+      <label class="field"><span>State</span><input type="text" id="set-state" placeholder="Florida"></label>
+      <label class="field"><span>County</span><input type="text" id="set-county" placeholder="Hillsborough"></label>
+      <label class="field"><span>Liability cap (text)</span><input type="text" id="set-liabilityCap" placeholder="the total amount paid for the job"></label>
+      <label class="field"><span>Claim window (days)</span><input type="text" id="set-claimWindow" placeholder="7"></label>
+      <label class="field"><span>Warranty period (days)</span><input type="text" id="set-warrantyPeriod" placeholder="90"></label>
+      <label class="field"><span>Default company rep name</span><input type="text" id="set-repName" placeholder="Your name"></label>
+      <button class="btn" id="btnSaveSettings">Save settings</button>
+      <div class="spacer"></div>
+      <button class="btn ghost" id="btnBackFromSettings">Back</button>
+    </div>
+  </section>
+
+  <!-- ============ JOB: intake ============ -->
+  <section id="screen-intake" class="screen">
+    <div class="card">
+      <h2>New job details</h2>
+      <div class="sub">Entered once — fills into every document.</div>
+      <label class="field"><span>Customer name</span><input type="text" id="job-customerName"></label>
+      <label class="field"><span>Service address</span><input type="text" id="job-address"></label>
+      <label class="field"><span>Job / Quote #</span><input type="text" id="job-jobNumber"></label>
+      <label class="field"><span>Date</span><input type="date" id="job-date"></label>
+    </div>
+    <div class="card">
+      <h2>Which agreements apply?</h2>
+      <div class="sub">Defaults cover a typical job. Tap to toggle.</div>
+      <div id="pickList"></div>
+    </div>
+  </section>
+
+  <!-- ============ JOB: conditions + photos ============ -->
+  <section id="screen-conditions" class="screen">
+    <div class="card">
+      <h2>Pre-existing conditions</h2>
+      <div class="sub">Photograph the area <b>before</b> work. This is your best protection against "you broke it" claims.</div>
+      <label class="field"><span>Area</span>
+        <select id="photo-area" style="width:100%;font-size:17px;padding:13px 14px;border:1.5px solid var(--line);border-radius:11px;"></select>
+      </label>
+      <label class="field"><span>Note (optional)</span><input type="text" id="photo-note" placeholder="e.g. existing crack near window"></label>
+      <input type="file" id="photo-input" accept="image/*" capture="environment" class="hidden">
+      <button class="btn" id="btnAddPhoto">📷 Take / add photo</button>
+      <div class="photo-grid" id="photoGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ JOB: sign documents ============ -->
+  <section id="screen-sign" class="screen">
+    <div id="docContainer"></div>
+  </section>
+
+  <!-- ============ JOB: review + finish ============ -->
+  <section id="screen-finish" class="screen">
+    <div class="card">
+      <h2>Review &amp; finish</h2>
+      <div class="sub">Confirm everything below is signed, then generate the packet.</div>
+      <div id="finishSummary"></div>
+      <button class="btn success" id="btnGenerate">✅ Generate signed packet</button>
+      <div class="spacer"></div>
+      <div id="finishResult"></div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ============ Bottom action bar ============ -->
+<div class="actionbar hidden" id="actionbar">
+  <div class="wrap-bar">
+    <button class="btn secondary" id="btnBack">Back</button>
+    <button class="btn" id="btnNext">Next</button>
+  </div>
+</div>
+
+<!-- ============ Signature modal ============ -->
+<div class="modal-back" id="sigModal">
+  <div class="modal">
+    <h3 id="sigTitle">Sign here</h3>
+    <div class="hint" id="sigHint">Sign with your finger.</div>
+    <div class="pad-wrap"><canvas class="pad" id="sigPad"></canvas></div>
+    <div class="spacer"></div>
+    <div class="btn-row">
+      <button class="btn secondary" id="sigClear">Clear</button>
+      <button class="btn secondary" id="sigCancel">Cancel</button>
+      <button class="btn success" id="sigSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/pdf-lib.min.js"></script>
+<script src="vendor/signature_pad.umd.min.js"></script>
+<script src="agreements.js"></script>
+<script src="storage.js"></script>
+<script src="pdf.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

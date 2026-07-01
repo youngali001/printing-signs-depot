@@ -3,7 +3,7 @@
  * Pre-caches the app shell so it opens with no internet at the job site.
  * Bump CACHE version when you change any cached file.
  * ========================================================================== */
-const CACHE = 'field-agreements-v1';
+const CACHE = 'field-agreements-v2';
 const ASSETS = [
   './',
   './index.html',

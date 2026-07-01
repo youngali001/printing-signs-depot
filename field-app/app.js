@@ -19,6 +19,7 @@ const App = (() => {
   let stepIndex = 0;       // index within STEPS while in a job
   let sigPad = null;       // SignaturePad instance
   let sigTarget = null;    // where the current signature/initials will be stored
+  let readDocs = new Set(); // ids of agreements the customer has scrolled through (scroll gate)
 
   const $ = (sel) => document.querySelector(sel);
   const $$ = (sel) => Array.from(document.querySelectorAll(sel));
@@ -100,6 +101,7 @@ const App = (() => {
       downloadPdf(job);
       return;
     }
+    readDocs = new Set();
     stepIndex = 0;
     startJobFlow();
   }
@@ -115,6 +117,7 @@ const App = (() => {
         docFields: {}, initials: {}, signatures: {}, photos: [],
       },
     };
+    readDocs = new Set();
     stepIndex = 0;
     startJobFlow();
   }
@@ -224,9 +227,15 @@ const App = (() => {
     const selected = AGREEMENTS.filter(a => job.data.selected.includes(a.id));
     if (!selected.length) { cont.innerHTML = '<div class="card"><div class="empty">No documents selected.</div></div>'; return; }
 
+    const intro = document.createElement('div');
+    intro.className = 'card';
+    intro.innerHTML = '<h2>Review &amp; sign</h2><div class="sub">Hand the iPad to the customer. Each agreement below unlocks for signing once they scroll through and read to the end.</div>';
+    cont.appendChild(intro);
+
     selected.forEach(ag => {
+      const isRead = readDocs.has(ag.id);
       const card = document.createElement('div');
-      card.className = 'card';
+      card.className = 'card' + (isRead ? '' : ' doc-locked');
       let html = '<h2>' + ag.code + ' — ' + esc(ag.title) + '</h2><div class="sub">' + esc(ag.when) + '</div>';
 
       // Editable fields (scope, pricing, etc.)
@@ -242,8 +251,13 @@ const App = (() => {
         html += '</div>';
       }
 
+      // Read-gate banner (scroll-to-end unlocks signing)
+      html += '<div class="read-gate' + (isRead ? ' read' : '') + '">' +
+        (isRead ? '✓ Reviewed — you may sign below' : '🔒 Scroll through and read to the end to unlock signing') + '</div>';
+
       // Body text
       html += '<div class="doc-body">' + renderBlocksHtml(ag) + '</div>';
+      html += '<div class="doc-end" aria-hidden="true"></div>';
       card.innerHTML = html;
 
       // Wire field inputs
@@ -263,7 +277,32 @@ const App = (() => {
       });
 
       cont.appendChild(card);
+
+      // Arm the scroll gate for docs not yet read
+      if (!isRead) observeRead(card, ag);
     });
+  }
+
+  /* Scroll gate: unlock a document's signing once its end scrolls into view.
+     Uses IntersectionObserver on a sentinel at the bottom of each agreement,
+     so short docs that fit on screen unlock immediately and long docs require
+     scrolling through. */
+  function observeRead(card, ag) {
+    const sentinel = card.querySelector('.doc-end');
+    const gate = card.querySelector('.read-gate');
+    if (!sentinel) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const en of entries) {
+        if (en.isIntersecting) {
+          readDocs.add(ag.id);
+          card.classList.remove('doc-locked');
+          if (gate) { gate.classList.add('read'); gate.textContent = '✓ Reviewed — you may sign below'; }
+          io.disconnect();
+          break;
+        }
+      }
+    }, { root: null, rootMargin: '0px 0px -80px 0px', threshold: 0 });
+    io.observe(sentinel);
   }
 
   function renderBlocksHtml(ag) {
@@ -291,20 +330,38 @@ const App = (() => {
 
   function wireInitial(card, ag, b) {
     const slot = card.querySelector('[data-initial="' + b.initial + '"]');
-    if (slot) slot.addEventListener('click', () => openSignature({
-      kind: 'initials', title: 'Initial here', hint: fillText(b.label),
-      onSave: async (dataUrl) => { job.data.initials[b.initial] = dataUrl; await persist(); renderSign(); },
-    }));
+    if (!slot) return;
+    slot.addEventListener('click', () => {
+      if (card.classList.contains('doc-locked')) { toast('Please read to the end first'); return; }
+      openSignature({
+        kind: 'initials', title: 'Initial here', hint: fillText(b.label),
+        onSave: async (dataUrl) => {
+          job.data.initials[b.initial] = dataUrl; await persist();
+          slot.classList.add('done');
+          const box = slot.querySelector('.box'); if (box) box.innerHTML = '<img src="' + dataUrl + '">';
+        },
+      });
+    });
   }
   function wireSign(card, ag, b) {
     const key = ag.id + ':' + b.sign;
     const slot = card.querySelector('[data-sign="' + key + '"]');
-    if (slot) slot.addEventListener('click', () => openSignature({
-      kind: 'signature',
-      title: b.sign === 'customer' ? 'Customer signature' : 'Company signature',
-      hint: ag.code + ' — ' + ag.title,
-      onSave: async (dataUrl) => { job.data.signatures[key] = { image: dataUrl, at: Date.now() }; await persist(); renderSign(); },
-    }));
+    if (!slot) return;
+    slot.addEventListener('click', () => {
+      if (card.classList.contains('doc-locked')) { toast('Please read to the end first'); return; }
+      openSignature({
+        kind: 'signature',
+        title: b.sign === 'customer' ? 'Customer signature' : 'Company signature',
+        hint: ag.code + ' — ' + ag.title,
+        onSave: async (dataUrl) => {
+          job.data.signatures[key] = { image: dataUrl, at: Date.now() }; await persist();
+          slot.classList.add('done');
+          const prev = slot.querySelector('.sig-preview'); if (prev) prev.innerHTML = '<img src="' + dataUrl + '">';
+          const lab = slot.querySelector('.lab');
+          if (lab) lab.textContent = b.label + ' — signed ' + new Date(job.data.signatures[key].at).toLocaleString();
+        },
+      });
+    });
   }
 
   /* ---- Step 4: finish ---- */

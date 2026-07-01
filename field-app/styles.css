@@ -121,6 +121,18 @@ input:focus, textarea:focus { outline: none; border-color: var(--cyan); }
 .doc-body li { margin-bottom: 6px; }
 .doc-fields { background: #F7FAFC; border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 16px; }
 
+/* ---- Scroll gate ---- */
+.read-gate {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 600;
+  color: #A9741B; background: #FFF3DC; border: 1px solid #F3E3B3;
+  border-radius: 10px; padding: 11px 13px; margin: 6px 0 14px;
+  position: sticky; top: 8px; z-index: 2;
+}
+.read-gate.read { color: #1A7A4C; background: #E4F7EE; border-color: #BFE8D2; }
+.doc-locked .initial-slot, .doc-locked .sig-slot { opacity: .4; pointer-events: none; filter: grayscale(.4); }
+.doc-end { height: 1px; }
+
 /* ---- Signature / initials ---- */
 .sig-slot { border: 1.5px dashed var(--cyan); border-radius: 12px; padding: 12px; margin: 12px 0; background: #FbFdff; }
 .sig-slot.done { border-style: solid; border-color: var(--green); background: #F1FBF6; }

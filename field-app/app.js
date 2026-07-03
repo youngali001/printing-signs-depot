@@ -229,7 +229,7 @@ const App = (() => {
 
     const intro = document.createElement('div');
     intro.className = 'card';
-    intro.innerHTML = '<h2>Review &amp; sign</h2><div class="sub">Hand the iPad to the customer. Each agreement below unlocks for signing once they scroll through and read to the end.</div>';
+    intro.innerHTML = '<h2>Review &amp; sign</h2><div class="sub">Hand the device to the customer. Each agreement below unlocks for signing once they scroll through and read to the end.</div>';
     cont.appendChild(intro);
 
     selected.forEach(ag => {

@@ -1,0 +1,15 @@
+{
+  "name": "Field Agreements",
+  "short_name": "Agreements",
+  "description": "Capture photos, sign customer liability agreements, and save the signed packet.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1B2A3B",
+  "theme_color": "#1B2A3B",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
